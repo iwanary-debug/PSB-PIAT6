@@ -1,0 +1,12 @@
+name = "piat6-psb"
+compatibility_date = "2026-09-07"
+pages_build_output_dir = "/"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "piat6_db"
+database_id = "a27a9b0b-bea8-4d73-b028-62c738cd6915"
+
+[[r2_buckets]]
+binding = "BERKAS"
+bucket_name = "piat6-berkas"
