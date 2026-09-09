@@ -1545,5 +1545,73 @@
             }
         };
     </script>
+<script type="module">
+import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+  // 1. DAFTAR BERKAS SESUAI GAMBAR SAMPEN
+  const docs = [
+    {id: 'raport', label: 'Raport Sekolah Asal', wajib: true},
+    {id: 'ijazah', label: 'Ijazah / SKL', wajib: true},
+    {id: 'surat_sehat', label: 'Surat Keterangan Sehat', wajib: true},
+    {id: 'kk', label: 'Kartu Keluarga (KK)', wajib: true},
+    {id: 'akta', label: 'Akta Kelahiran', wajib: true}
+  ];
+
+  // 2. BIKIN TAMPILAN OTOMATIS DI DALAM documentChecklistContainer
+  const container = document.getElementById('documentChecklistContainer');
+  if(container){
+    container.innerHTML = ''; // Kosongkan dulu
+    docs.forEach(doc => {
+      container.innerHTML += `
+        <div class="border border-slate-200 p-3 rounded-xl">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="font-semibold text-slate-700">${doc.label} ${doc.wajib? '<span class="text-red-500">*</span>' : ''}</p>
+                    <p id="${doc.id}_status" class="text-[10px] text-slate-400">Belum Diunggah ${doc.wajib? '(Wajib)' : ''}</p>
+                </div>
+                <input type="file" id="upload_${doc.id}" accept="image/*,.pdf" class="hidden">
+                <button onclick="document.getElementById('upload_${doc.id}').click()" 
+                    class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold">
+                    Upload Berkas
+                </button>
+            </div>
+        </div>
+      `;
+    });
+  }
+
+  // 3. LOGIKA UPLOAD BENERAN KE FIREBASE
+  document.querySelectorAll('input[type="file"]').forEach(input => {
+    input.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        const idBerkas = e.target.id.replace('upload_', '');
+        const uid = window.firebaseServices.auth.currentUser?.uid;
+        
+        if(!file ||!uid) return alert("Gagal: Belum login");
+        
+        document.getElementById(idBerkas + '_status').innerText = "Mengupload...";
+        document.getElementById(idBerkas + '_status').className = "text-[10px] text-amber-500";
+
+        try {
+            const storageRef = ref(window.firebaseServices.storage, `berkas/${uid}/${idBerkas}_${Date.now()}`);
+            const snap = await uploadBytes(storageRef, file);
+            const url = await getDownloadURL(snap.ref);
+
+            document.getElementById(idBerkas + '_status').innerText = "Sudah Diunggah";
+            document.getElementById(idBerkas + '_status').className = "text-[10px] text-emerald-600 font-semibold";
+            
+            // Simpan URL sementara buat nanti dikirim ke Firestore
+            window.uploadedFiles = window.uploadedFiles || {};
+            window.uploadedFiles[idBerkas] = url;
+
+        } catch (error) {
+            alert("Upload gagal: " + error.message);
+            document.getElementById(idBerkas + '_status').innerText = "Gagal Upload";
+        }
+    });
+  });
+
+  console.log("Panel upload siap");
+</script>
 </body>
 </html>
