@@ -17,6 +17,42 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
+    <!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+  // 1. CONFIG FIREBASE - GANTI PUNYA SAMPEAN
+  const firebaseConfig = {
+    apiKey: "APIKEY_SAMPEAN",
+    authDomain: "piat6-psb.firebaseapp.com",
+    projectId: "piat6-psb",
+    storageBucket: "piat6-psb.appspot.com",
+    messagingSenderId: "ID_SAMPEAN",
+    appId: "APPID_SAMPEAN"
+  };
+
+  // 2. INIT
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const storage = getStorage(app);
+  let currentUser = null;
+
+  // 3. LOGIN ANONIM OTOMATIS
+  signInAnonymously(auth);
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      currentUser = user;
+      console.log("UID Santri:", user.uid);
+    }
+  });
+
+  // Nanti fungsi upload + submit kita taruh di sini juga
+  window.firebaseServices = { auth, db, storage, currentUser };
+</script>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
 
