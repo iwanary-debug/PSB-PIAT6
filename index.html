@@ -17,48 +17,57 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
-    <!-- Firebase SDK -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-  import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+    <!-- Firebase SDK & Safe Initialization -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-  // 1. CONFIG FIREBASE - GANTI PUNYA SAMPEAN
-  const firebaseConfig = {
-    apiKey: "APIKEY_SAMPEAN",
-    authDomain: "piat6-psb.firebaseapp.com",
-    projectId: "piat6-psb",
-    storageBucket: "piat6-psb.appspot.com",
-    messagingSenderId: "ID_SAMPEAN",
-    appId: "APPID_SAMPEAN"
-  };
+        // Safe Firebase Configuration Handling with Preview Fallback
+        const firebaseConfig = typeof __firebase_config !== 'undefined' 
+            ? JSON.parse(__firebase_config) 
+            : {
+                apiKey: "AIzaSyDummyKeyForPreviewModeOnly12345",
+                authDomain: "piat6-psb.firebaseapp.com",
+                projectId: "piat6-psb",
+                storageBucket: "piat6-psb.appspot.com",
+                messagingSenderId: "123456789",
+                appId: "1:123456:web:123456"
+            };
 
-  // 2. INIT
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-  const storage = getStorage(app);
-  let currentUser = null;
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+        let currentUser = null;
 
-  // 3. LOGIN ANONIM OTOMATIS
-  signInAnonymously(auth);
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      currentUser = user;
-      console.log("UID Santri:", user.uid);
-    }
-  });
+        try {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                signInAnonymously(auth).catch(err => {
+                    console.warn("Auth demo mode active:", err.message);
+                });
+            }
+        } catch (e) {
+            console.warn("Auth init notice:", e);
+        }
 
-  // Nanti fungsi upload + submit kita taruh di sini juga
-  window.firebaseServices = { auth, db, storage, currentUser };
-</script>
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+            }
+        });
+
+        window.firebaseServices = { auth, db, storage, currentUser };
+    </script>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
 
     <!-- Modal Notifikasi Kustom -->
     <div id="customModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm hidden">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 mx-4 transform transition-all scale-95 opacity-0" id="modalContainer">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 mx-4 transform transition-all scale-100" id="modalContainer">
             <div class="flex items-center space-x-3 mb-4">
                 <div id="modalIcon" class="w-10 h-10 rounded-full flex items-center justify-center text-white shrink-0 bg-emerald-600">
                     <i class="fa-solid fa-check"></i>
@@ -218,7 +227,7 @@
                         </div>
                     </div>
 
-                    <!-- Statistik Grid -->
+                    <!-- Statistik Grid Utama -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center space-x-4">
                             <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-lg font-bold">
@@ -258,6 +267,38 @@
                         </div>
                     </div>
 
+                    <!-- Statistik Rincian Jenjang Pendaftar -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+                            <div>
+                                <p class="text-[11px] text-slate-400 uppercase font-bold">Jenjang MTw</p>
+                                <h4 id="statJenjangMTw" class="text-lg font-bold text-slate-800">0</h4>
+                            </div>
+                            <span class="w-8 h-8 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center font-bold text-xs">MTw</span>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+                            <div>
+                                <p class="text-[11px] text-slate-400 uppercase font-bold">Jenjang IM</p>
+                                <h4 id="statJenjangIM" class="text-lg font-bold text-slate-800">0</h4>
+                            </div>
+                            <span class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-xs">IM</span>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+                            <div>
+                                <p class="text-[11px] text-slate-400 uppercase font-bold">Jenjang IL</p>
+                                <h4 id="statJenjangIL" class="text-lg font-bold text-slate-800">0</h4>
+                            </div>
+                            <span class="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-xs">IL</span>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+                            <div>
+                                <p class="text-[11px] text-slate-400 uppercase font-bold">Jenjang Akselerasi</p>
+                                <h4 id="statJenjangAkselerasi" class="text-lg font-bold text-slate-800">0</h4>
+                            </div>
+                            <span class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold text-xs">Aks</span>
+                        </div>
+                    </div>
+
                     <!-- Panel Informasi Tambahan -->
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
@@ -271,6 +312,7 @@
                                         <tr>
                                             <th class="p-3 rounded-l-xl">No. Pendaftaran</th>
                                             <th class="p-3">Nama Santri</th>
+                                            <th class="p-3">Jenjang</th>
                                             <th class="p-3">Gelombang</th>
                                             <th class="p-3 rounded-r-xl">Status</th>
                                         </tr>
@@ -285,7 +327,7 @@
                         <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
                             <div>
                                 <h3 class="text-base font-bold text-slate-900 mb-2">Informasi Pesantren</h3>
-                                <p class="text-xs text-slate-500 mb-4"> Pesantren Islam Al-Irsyad Tengaran 6 Bondowoso berkomitmen mencetak generasi santri yang hafal Al-Qur'an, berakhlak mulia, dan berwawasan luas.</p>
+                                <p class="text-xs text-slate-500 mb-4">Pesantren Islam Al-Irsyad Tengaran 6 Bondowoso berkomitmen mencetak generasi santri yang hafal Al-Qur'an, berakhlak mulia, dan berwawasan luas.</p>
                                 <div class="space-y-2 text-xs">
                                     <div class="flex justify-between py-1.5 border-b border-slate-100">
                                         <span class="text-slate-500 font-semibold">Tahun Ajaran:</span>
@@ -388,7 +430,14 @@
                                 <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400"><i class="fa-solid fa-search"></i></span>
                                 <input type="text" id="searchApplicantInput" oninput="renderApplicantsTable()" placeholder="Cari nama / nomor..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-emerald-600 transition-all">
                             </div>
-                            <div class="flex items-center space-x-3 w-full sm:w-auto">
+                            <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                                <select id="filterJenjangSelect" onchange="renderApplicantsTable()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-600">
+                                    <option value="">Semua Jenjang</option>
+                                    <option value="MTw">MTw</option>
+                                    <option value="IM">IM</option>
+                                    <option value="IL">IL</option>
+                                    <option value="Akselerasi">Akselerasi</option>
+                                </select>
                                 <select id="filterWaveSelect" onchange="renderApplicantsTable()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-600">
                                     <option value="">Semua Gelombang</option>
                                     <option value="Gelombang 1">Gelombang 1</option>
@@ -411,6 +460,7 @@
                                     <tr>
                                         <th class="p-3.5 rounded-l-xl">No. Pendaftaran</th>
                                         <th class="p-3.5">Nama Santri</th>
+                                        <th class="p-3.5">Jenjang</th>
                                         <th class="p-3.5">No. WA Wali</th>
                                         <th class="p-3.5">Gelombang</th>
                                         <th class="p-3.5">Status & Berkas</th>
@@ -463,6 +513,10 @@
                                         <span id="portalFullName" class="font-bold text-slate-800 text-sm">-</span>
                                     </div>
                                     <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                        <span class="text-slate-400 font-semibold block mb-1">Jenjang Pendidikan</span>
+                                        <span id="portalJenjang" class="font-bold text-emerald-700 text-sm">-</span>
+                                    </div>
+                                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
                                         <span class="text-slate-400 font-semibold block mb-1">Asal Sekolah / Madrasah</span>
                                         <span id="portalSchool" class="font-bold text-slate-800 text-sm">-</span>
                                     </div>
@@ -470,7 +524,7 @@
                                         <span class="text-slate-400 font-semibold block mb-1">Gelombang Pendaftaran</span>
                                         <span id="portalWave" class="font-bold text-emerald-600 text-sm">-</span>
                                     </div>
-                                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 sm:col-span-2">
                                         <span class="text-slate-400 font-semibold block mb-1">Status Kelulusan Seleksi</span>
                                         <span id="portalStatusBadge" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">-</span>
                                     </div>
@@ -677,15 +731,24 @@
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Jenjang Pendidikan</label>
+                        <select id="appJenjang" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-600">
+                            <option value="MTw">MTw</option>
+                            <option value="IM">IM</option>
+                            <option value="IL">IL</option>
+                            <option value="Akselerasi">Akselerasi</option>
+                        </select>
+                    </div>
+                    <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Asal Sekolah / Madrasah</label>
                         <input type="text" id="appSchool" required placeholder="SDIT Al-Irsyad Bondowoso" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-emerald-600">
                     </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">No. WhatsApp Wali</label>
                         <input type="text" id="appPhone" required placeholder="081234567890" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-emerald-600">
                     </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Gelombang</label>
                         <select id="appWave" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-600">
@@ -693,16 +756,16 @@
                             <option value="Gelombang 2">Gelombang 2</option>
                         </select>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Status Seleksi</label>
-                        <select id="appStatus" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-600">
-                            <option value="Menunggu Verifikasi">Menunggu Verifikasi</option>
-                            <option value="Lulus Berkas">Lulus Berkas</option>
-                            <option value="Diterima">Diterima</option>
-                            <option value="Tidak Diterima">Tidak Diterima</option>
-                            <option value="Tes Ulang">Tes Ulang</option>
-                        </select>
-                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Status Seleksi</label>
+                    <select id="appStatus" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-600">
+                        <option value="Menunggu Verifikasi">Menunggu Verifikasi</option>
+                        <option value="Lulus Berkas">Lulus Berkas</option>
+                        <option value="Diterima">Diterima</option>
+                        <option value="Tidak Diterima">Tidak Diterima</option>
+                        <option value="Tes Ulang">Tes Ulang</option>
+                    </select>
                 </div>
                 <div class="flex justify-end space-x-3 pt-3">
                     <button type="button" onclick="closeApplicantModal()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all">Batal</button>
@@ -726,26 +789,35 @@
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Asal Sekolah (SD/MI)</label>
-                        <input type="text" id="regSchool" required placeholder="MI Al-Hikmah" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-emerald-600">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Jenjang Pilihan</label>
+                        <select id="regJenjang" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-600">
+                            <option value="MTw">MTw</option>
+                            <option value="IM">IM</option>
+                            <option value="IL">IL</option>
+                            <option value="Akselerasi">Akselerasi</option>
+                        </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">No. WhatsApp Wali</label>
-                        <input type="text" id="regPhone" required placeholder="081234567890" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-emerald-600">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Asal Sekolah (SD/MI)</label>
+                        <input type="text" id="regSchool" required placeholder="MI Al-Hikmah" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-emerald-600">
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Kata Sandi / PIN Login</label>
-                        <input type="password" id="regPassword" required placeholder="••••••••" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-emerald-600">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">No. WhatsApp Wali</label>
+                        <input type="text" id="regPhone" required placeholder="081234567890" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-emerald-600">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Gelombang Pendaftaran</label>
-                        <select id="regWave" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-600">
-                            <option value="Gelombang 1">Gelombang 1 (Utama)</option>
-                            <option value="Gelombang 2">Gelombang 2 (Susulan)</option>
-                        </select>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Kata Sandi / PIN</label>
+                        <input type="password" id="regPassword" required placeholder="••••••••" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-emerald-600">
                     </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Gelombang Pendaftaran</label>
+                    <select id="regWave" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-600">
+                        <option value="Gelombang 1">Gelombang 1 (Utama)</option>
+                        <option value="Gelombang 2">Gelombang 2 (Susulan)</option>
+                    </select>
                 </div>
                 <div class="flex justify-end space-x-3 pt-3">
                     <button type="button" onclick="closeRegisterModal()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all">Batal</button>
@@ -881,6 +953,31 @@
             document.getElementById('manageWaveModal').classList.toggle('hidden');
         };
 
+        window.handleSaveWave = function(e) {
+            e.preventDefault();
+            const id = document.getElementById('waveId').value;
+            const waveData = {
+                id: id || 'wave_' + (wavesList.length + 1),
+                name: document.getElementById('waveName').value,
+                period: document.getElementById('wavePeriod').value,
+                quota: document.getElementById('waveQuota').value,
+                fee: document.getElementById('waveFee').value,
+                income: document.getElementById('waveIncome').value,
+                status: 'Aktif'
+            };
+
+            if (id) {
+                const idx = wavesList.findIndex(w => w.id === id);
+                if (idx !== -1) wavesList[idx] = waveData;
+            } else {
+                wavesList.push(waveData);
+            }
+
+            document.getElementById('manageWaveModal').classList.add('hidden');
+            renderWavesCards();
+            showAlert("Gelombang berhasil diperbarui & disimpan!", "Sukses", "emerald");
+        };
+
         window.renderWavesCards = function() {
             const container = document.getElementById('wavesCardsContainer');
             if (!container) return;
@@ -930,9 +1027,9 @@
                 return;
             }
 
-            let csvContent = "No. Pendaftaran\tNama Lengkap\tNo. WA Wali\tAsal Sekolah\tGelombang\tStatus\n";
+            let csvContent = "No. Pendaftaran\tNama Lengkap\tJenjang\tNo. WA Wali\tAsal Sekolah\tGelombang\tStatus\n";
             applicantsList.forEach(app => {
-                csvContent += `${app.regNo}\t${app.name}\t${app.phone || '-'}\t${app.school}\t${app.wave}\t${app.status}\n`;
+                csvContent += `${app.regNo}\t${app.name}\t${app.jenjang || 'MTw'}\t${app.phone || '-'}\t${app.school}\t${app.wave}\t${app.status}\n`;
             });
 
             const blob = new Blob(["\ufeff" + csvContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
@@ -1044,6 +1141,7 @@
             document.getElementById('portalWelcomeName').innerText = `Ahlan wa Sahlan, ${user.name}!`;
             document.getElementById('portalRegNumber').innerText = user.regNo;
             document.getElementById('portalFullName').innerText = user.name;
+            document.getElementById('portalJenjang').innerText = user.jenjang || 'MTw';
             document.getElementById('portalSchool').innerText = user.school;
             document.getElementById('portalWave').innerText = user.wave;
             
@@ -1085,6 +1183,7 @@
                         regNo: "PSB2026001",
                         password: "123",
                         name: "Muhammad Zidan Al-Fatih",
+                        jenjang: "MTw",
                         school: "SDIT Al-Irsyad Bondowoso",
                         phone: "081234567890",
                         wave: "Gelombang 1",
@@ -1131,6 +1230,12 @@
             document.getElementById('statPendingApplicants').innerText = applicantsList.filter(a => a.status === 'Menunggu Verifikasi').length;
             document.getElementById('statAcceptedApplicants').innerText = applicantsList.filter(a => a.status === 'Diterima').length;
             document.getElementById('statCompletedTasks').innerText = tasksList.filter(t => t.status === 'done').length;
+
+            // Jenjang breakdown
+            document.getElementById('statJenjangMTw').innerText = applicantsList.filter(a => (a.jenjang || 'MTw') === 'MTw').length;
+            document.getElementById('statJenjangIM').innerText = applicantsList.filter(a => a.jenjang === 'IM').length;
+            document.getElementById('statJenjangIL').innerText = applicantsList.filter(a => a.jenjang === 'IL').length;
+            document.getElementById('statJenjangAkselerasi').innerText = applicantsList.filter(a => a.jenjang === 'Akselerasi').length;
         }
 
         function renderKanban() {
@@ -1189,18 +1294,20 @@
             tbody.innerHTML = '';
 
             const search = document.getElementById('searchApplicantInput').value.toLowerCase();
+            const jenjangFilter = document.getElementById('filterJenjangSelect').value;
             const wave = document.getElementById('filterWaveSelect').value;
             const status = document.getElementById('filterStatusSelect').value;
 
             const filtered = applicantsList.filter(app => {
                 const matchSearch = app.name.toLowerCase().includes(search) || app.regNo.toLowerCase().includes(search);
+                const matchJenjang = jenjangFilter ? (app.jenjang || 'MTw') === jenjangFilter : true;
                 const matchWave = wave ? app.wave === wave : true;
                 const matchStatus = status ? app.status === status : true;
-                return matchSearch && matchWave && matchStatus;
+                return matchSearch && matchJenjang && matchWave && matchStatus;
             });
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400">Tidak ada data pendaftar yang ditemukan.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-400">Tidak ada data pendaftar yang ditemukan.</td></tr>`;
                 return;
             }
 
@@ -1211,7 +1318,6 @@
                 else if (app.status === 'Tidak Diterima') badgeClass = "bg-rose-100 text-rose-800";
                 else if (app.status === 'Tes Ulang') badgeClass = "bg-purple-100 text-purple-800";
 
-                // Hitung dokumen yang sudah/kurang
                 const docs = app.documents || {};
                 const uploadedCount = REQUIRED_DOCS.filter(d => docs[d.key]).length;
                 const totalDocs = REQUIRED_DOCS.length;
@@ -1222,6 +1328,7 @@
                 tr.innerHTML = `
                     <td class="p-3.5 font-bold text-slate-800">${app.regNo}</td>
                     <td class="p-3.5 font-semibold text-slate-800">${app.name}</td>
+                    <td class="p-3.5"><span class="px-2 py-0.5 bg-slate-100 text-slate-700 font-bold rounded">${app.jenjang || 'MTw'}</span></td>
                     <td class="p-3.5 text-slate-600">${app.phone || '-'}</td>
                     <td class="p-3.5 text-slate-600">${app.wave}</td>
                     <td class="p-3.5 space-y-1">
@@ -1252,6 +1359,7 @@
                 tr.innerHTML = `
                     <td class="p-3 font-bold text-slate-800">${app.regNo}</td>
                     <td class="p-3 font-semibold text-slate-800">${app.name}</td>
+                    <td class="p-3"><span class="px-2 py-0.5 bg-slate-100 text-slate-700 font-bold rounded text-[10px]">${app.jenjang || 'MTw'}</span></td>
                     <td class="p-3 text-slate-600">${app.wave}</td>
                     <td class="p-3"><span class="px-2 py-0.5 rounded-full font-bold text-[10px] ${badgeClass}">${app.status}</span></td>
                 `;
@@ -1416,6 +1524,7 @@
             document.getElementById('appRegNo').value = "PSB2026" + String(applicantsList.length + 1).padStart(3, '0');
             document.getElementById('appPassword').value = "123456";
             document.getElementById('appName').value = "";
+            document.getElementById('appJenjang').value = "MTw";
             document.getElementById('appSchool').value = "";
             document.getElementById('appPhone').value = "";
             document.getElementById('appWave').value = "Gelombang 1";
@@ -1435,6 +1544,7 @@
             document.getElementById('appRegNo').value = app.regNo;
             document.getElementById('appPassword').value = app.password || "123";
             document.getElementById('appName').value = app.name;
+            document.getElementById('appJenjang').value = app.jenjang || "MTw";
             document.getElementById('appSchool').value = app.school;
             document.getElementById('appPhone').value = app.phone || "";
             document.getElementById('appWave').value = app.wave;
@@ -1457,6 +1567,7 @@
                 regNo: regNoVal,
                 password: document.getElementById('appPassword').value,
                 name: nameVal,
+                jenjang: document.getElementById('appJenjang').value,
                 school: document.getElementById('appSchool').value,
                 phone: phoneVal,
                 wave: document.getElementById('appWave').value,
@@ -1471,9 +1582,8 @@
                     await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'applicants'), data);
                 }
                 closeApplicantModal();
-                showAlert("Data pendaftar berhasil disimpan!");
+                showAlert("Data pendaftar berhasil disimpan dan kembali ke halaman utama!");
 
-                // Simulasikan Notifikasi WhatsApp otomatis jika status berubah
                 if (statusChanged && phoneVal) {
                     const waText = encodeURIComponent(`Assalamu'alaikum Wali dari ${nameVal} (${regNoVal}). Status seleksi PSB PIAT 6 Bondowoso Anda telah diperbarui menjadi: *${statusVal}*. Silakan cek portal pendaftar.`);
                     const waLink = `https://wa.me/${phoneVal.replace(/^0/, '62')}?text=${waText}`;
@@ -1505,6 +1615,7 @@
 
         window.openRegisterModal = function() {
             document.getElementById('regFullName').value = "";
+            document.getElementById('regJenjang').value = "MTw";
             document.getElementById('regSchool').value = "";
             document.getElementById('regPhone').value = "";
             document.getElementById('regPassword').value = "";
@@ -1518,6 +1629,7 @@
         window.handlePublicRegister = async function(e) {
             e.preventDefault();
             const name = document.getElementById('regFullName').value;
+            const jenjang = document.getElementById('regJenjang').value;
             const school = document.getElementById('regSchool').value;
             const phone = document.getElementById('regPhone').value;
             const password = document.getElementById('regPassword').value;
@@ -1528,6 +1640,7 @@
                 regNo: regNo,
                 password: password,
                 name: name,
+                jenjang: jenjang,
                 school: school,
                 phone: phone,
                 wave: wave,
@@ -1545,73 +1658,5 @@
             }
         };
     </script>
-<script type="module">
-import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
-
-  // 1. DAFTAR BERKAS SESUAI GAMBAR SAMPEN
-  const docs = [
-    {id: 'raport', label: 'Raport Sekolah Asal', wajib: true},
-    {id: 'ijazah', label: 'Ijazah / SKL', wajib: true},
-    {id: 'surat_sehat', label: 'Surat Keterangan Sehat', wajib: true},
-    {id: 'kk', label: 'Kartu Keluarga (KK)', wajib: true},
-    {id: 'akta', label: 'Akta Kelahiran', wajib: true}
-  ];
-
-  // 2. BIKIN TAMPILAN OTOMATIS DI DALAM documentChecklistContainer
-  const container = document.getElementById('documentChecklistContainer');
-  if(container){
-    container.innerHTML = ''; // Kosongkan dulu
-    docs.forEach(doc => {
-      container.innerHTML += `
-        <div class="border border-slate-200 p-3 rounded-xl">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="font-semibold text-slate-700">${doc.label} ${doc.wajib? '<span class="text-red-500">*</span>' : ''}</p>
-                    <p id="${doc.id}_status" class="text-[10px] text-slate-400">Belum Diunggah ${doc.wajib? '(Wajib)' : ''}</p>
-                </div>
-                <input type="file" id="upload_${doc.id}" accept="image/*,.pdf" class="hidden">
-                <button onclick="document.getElementById('upload_${doc.id}').click()" 
-                    class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold">
-                    Upload Berkas
-                </button>
-            </div>
-        </div>
-      `;
-    });
-  }
-
-  // 3. LOGIKA UPLOAD BENERAN KE FIREBASE
-  document.querySelectorAll('input[type="file"]').forEach(input => {
-    input.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        const idBerkas = e.target.id.replace('upload_', '');
-        const uid = window.firebaseServices.auth.currentUser?.uid;
-        
-        if(!file ||!uid) return alert("Gagal: Belum login");
-        
-        document.getElementById(idBerkas + '_status').innerText = "Mengupload...";
-        document.getElementById(idBerkas + '_status').className = "text-[10px] text-amber-500";
-
-        try {
-            const storageRef = ref(window.firebaseServices.storage, `berkas/${uid}/${idBerkas}_${Date.now()}`);
-            const snap = await uploadBytes(storageRef, file);
-            const url = await getDownloadURL(snap.ref);
-
-            document.getElementById(idBerkas + '_status').innerText = "Sudah Diunggah";
-            document.getElementById(idBerkas + '_status').className = "text-[10px] text-emerald-600 font-semibold";
-            
-            // Simpan URL sementara buat nanti dikirim ke Firestore
-            window.uploadedFiles = window.uploadedFiles || {};
-            window.uploadedFiles[idBerkas] = url;
-
-        } catch (error) {
-            alert("Upload gagal: " + error.message);
-            document.getElementById(idBerkas + '_status').innerText = "Gagal Upload";
-        }
-    });
-  });
-
-  console.log("Panel upload siap");
-</script>
 </body>
 </html>
