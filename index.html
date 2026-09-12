@@ -62,20 +62,21 @@
                     <label class="block text-xs font-bold text-slate-700 mb-1.5">Email Panitia</label>
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400"><i class="fa-solid fa-envelope"></i></span>
-                        <input type="email" id="adminEmail" required placeholder="panitia@piat6bondowoso.sch.id" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-emerald-600 focus:bg-white transition-all">
+                        <input type="email" id="adminEmail" required value="panitia@piat6bondowoso.sch.id" placeholder="panitia@piat6bondowoso.sch.id" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-emerald-600 focus:bg-white transition-all">
                     </div>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1.5">Kata Sandi</label>
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400"><i class="fa-solid fa-lock"></i></span>
-                        <input type="password" id="adminPassword" required placeholder="••••••••" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-emerald-600 focus:bg-white transition-all">
+                        <input type="password" id="adminPassword" required value="123456" placeholder="••••••••" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-emerald-600 focus:bg-white transition-all">
                     </div>
                 </div>
                 <button type="submit" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/30 transition-all text-sm flex items-center justify-center space-x-2">
                     <span>Masuk sebagai Panitia</span>
                     <i class="fa-solid fa-arrow-right"></i>
                 </button>
+                <p class="text-[11px] text-slate-400 text-center italic mt-2">Info Login Admin: Gunakan email apa saja (misal: panitia@piat6bondowoso.sch.id)</p>
             </form>
 
             <!-- Form Calon Santri -->
@@ -84,26 +85,27 @@
                     <label class="block text-xs font-bold text-slate-700 mb-1.5">Nomor Pendaftaran / Username</label>
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400"><i class="fa-solid fa-id-card"></i></span>
-                        <input type="text" id="userUsername" required placeholder="Contoh: PSB2026001" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-emerald-600 focus:bg-white transition-all uppercase">
+                        <input type="text" id="userUsername" required value="PSB2026001" placeholder="Contoh: PSB2026001" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-emerald-600 focus:bg-white transition-all uppercase">
                     </div>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1.5">Kata Sandi / NISN</label>
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400"><i class="fa-solid fa-key"></i></span>
-                        <input type="password" id="userPassword" required placeholder="••••••••" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-emerald-600 focus:bg-white transition-all">
+                        <input type="password" id="userPassword" required value="123" placeholder="••••••••" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-emerald-600 focus:bg-white transition-all">
                     </div>
                 </div>
                 <button type="submit" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/30 transition-all text-sm flex items-center justify-center space-x-2">
                     <span>Masuk Portal Pendaftar</span>
                     <i class="fa-solid fa-arrow-right"></i>
                 </button>
+                <p class="text-[11px] text-slate-400 text-center italic mt-1">Info Login Santri: No. Pendaftaran <strong class="text-emerald-700">PSB2026001</strong> dengan Sandi <strong class="text-emerald-700">123</strong></p>
                 <div class="text-center pt-2">
                     <button type="button" onclick="openRegisterModal()" class="text-xs font-semibold text-emerald-700 hover:underline">Belum punya akun? Daftar sebagai Calon Santri Baru</button>
                 </div>
             </form>
 
-            <div class="mt-8 pt-6 border-t border-slate-100 text-center">
+            <div class="mt-6 pt-4 border-t border-slate-100 text-center">
                 <p class="text-xs text-slate-400">Pesantren Islam Al-Irsyad Tengaran (PIAT) 6 Bondowoso</p>
             </div>
         </div>
@@ -303,6 +305,7 @@
                     </div>
                 </section>
 
+                <!-- TAB 2: KANBAN -->
                 <section id="view-kanban" class="space-y-6 hidden">
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
@@ -315,7 +318,6 @@
                         </button>
                     </div>
 
-                    <!-- Kanban Columns -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
                         <div class="bg-slate-100 p-4 rounded-2xl border border-slate-200">
                             <div class="flex items-center justify-between mb-4 px-1">
@@ -352,11 +354,12 @@
                     </div>
                 </section>
 
+                <!-- TAB 3: APPLICANTS -->
                 <section id="view-applicants" class="space-y-6 hidden">
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                             <h1 class="text-xl font-bold text-slate-900">Manajemen Data Calon Santri</h1>
-                            <p class="text-xs text-slate-500">Daftar lengkap pendaftar dengan pilihan jenjang (MTw, IM, IL, Akselerasi).</p>
+                            <p class="text-xs text-slate-500">Daftar lengkap pendaftar dengan pilihan 4 jenjang (MTw, IM, IL, Akselerasi).</p>
                         </div>
                         <div class="flex items-center space-x-3">
                             <button onclick="exportApplicantsExcel()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-md shadow-blue-600/20 transition-all flex items-center space-x-2">
@@ -420,6 +423,7 @@
                     </div>
                 </section>
 
+                <!-- TAB 4: WAVES -->
                 <section id="view-waves" class="space-y-6 hidden">
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
@@ -435,6 +439,7 @@
                     <div id="wavesCardsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
                 </section>
 
+                <!-- TAB 5: USER PORTAL -->
                 <section id="view-userportal" class="space-y-6 hidden">
                     <div class="bg-gradient-to-r from-emerald-800 to-emerald-900 rounded-3xl p-6 md:p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
                         <div>
@@ -801,7 +806,15 @@
             { key: 'akta', label: 'Akta Kelahiran' }
         ];
 
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "demo", authDomain: "demo.firebaseapp.com", projectId: "demo" };
+        // Robust Firebase Config Fallback for Firebase Hosting / Standalone Deployment
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { 
+            apiKey: "AIzaSyDemoKeyForFallbackPlaceholderOnly", 
+            authDomain: "piat6-bondowoso.firebaseapp.com", 
+            projectId: "piat6-bondowoso",
+            storageBucket: "piat6-bondowoso.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123:web:abc"
+        };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
@@ -950,11 +963,11 @@
                     enterApp();
                     switchTab('userportal');
                 } else {
-                    showAlert("Nomor pendaftaran atau kata sandi salah. Silakan periksa kembali.", "Peringatan", "amber");
+                    showAlert("Nomor pendaftaran atau kata sandi salah. Silakan periksa kembali (Default: PSB2026001 / 123).", "Peringatan", "amber");
                 }
             } catch (err) {
                 console.error(err);
-                showAlert("Gagal melakukan login. Periksa koneksi internet Anda.", "Error", "rose");
+                showAlert("Gagal melakukan login. Periksa konfigurasi Firebase dan koneksi internet Anda.", "Error", "rose");
             }
         };
 
