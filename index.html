@@ -17,6 +17,55 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
+    <!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  // GANTI DENGAN KODE DARI FIREBASE SAMPEAN
+  const firebaseConfig = {
+    apiKey: "AIzaSy...",
+    authDomain: "psb-piat6.firebaseapp.com",
+    projectId: "psb-piat6",
+    storageBucket: "psb-piat6.appspot.com",
+    messagingSenderId: "xxx",
+    appId: "1:xxx:web:xxx"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  
+  // Login Anonymous buat bisa akses Firestore
+  signInAnonymously(auth);
+
+  // Taruh di window biar bisa dipake fungsi lain
+  window.auth = auth;
+  window.db = db;
+  window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+</script>
+    <script type="module">
+document.addEventListener('DOMContentLoaded', () => {
+    const adminForm = document.getElementById('adminLoginForm');
+    if(adminForm){
+        adminForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('adminEmail').value;
+            const password = document.getElementById('adminPassword').value;
+
+            try {
+                await window.signInWithEmailAndPassword(window.auth, email, password);
+                showModal('Sukses', 'Login berhasil!', 'success');
+                setTimeout(() => { window.location.href = "dashboard.html" }, 1500);
+            } catch (error) {
+                showModal('Gagal Login', 'Email atau Password salah!', 'error');
+                console.log(error);
+            }
+        });
+    }
+});
+</script>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
 
