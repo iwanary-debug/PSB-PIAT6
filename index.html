@@ -806,7 +806,7 @@
         </div>
     </div>
 
-    <!-- Firebase & Logika Aplikasi (Robust & Stable Sync) -->
+    <!-- Firebase & Logika Aplikasi -->
     <script type="module">
         import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -858,7 +858,6 @@
 
         async function initializeDefaultDataIfEmpty() {
             try {
-                // 1. Tasks Default
                 const tasksSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'tasks'));
                 if (tasksSnap.empty) {
                     await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'tasks'), {
@@ -872,7 +871,6 @@
                     });
                 }
 
-                // 2. Applicants Default
                 const appsSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'applicants'));
                 if (appsSnap.empty) {
                     await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'applicants'), {
@@ -888,7 +886,6 @@
                     });
                 }
 
-                // 3. Waves Default
                 const wavesSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'waves'));
                 if (wavesSnap.empty) {
                     await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'waves'), {
@@ -907,7 +904,6 @@
         }
 
         function loadFirestoreData() {
-            // Real-time listener Tasks
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'tasks'), (snapshot) => {
                 tasksList = [];
                 snapshot.forEach((docSnap) => {
@@ -917,7 +913,6 @@
                 updateDashboardStats();
             });
 
-            // Real-time listener Applicants
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'applicants'), (snapshot) => {
                 applicantsList = [];
                 snapshot.forEach((docSnap) => {
@@ -935,7 +930,6 @@
                 }
             });
 
-            // Real-time listener Waves
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'waves'), (snapshot) => {
                 wavesList = [];
                 snapshot.forEach((docSnap) => {
@@ -966,6 +960,7 @@
                 document.getElementById('mobileNavUser').classList.add('hidden');
 
                 enterApp();
+                switchTab('dashboard'); // Pastikan selalu reset ke dashboard admin
                 showAlert("Login Panitia Berhasil! Ahlan wa Sahlan.", "Sukses", "emerald");
             } catch (error) {
                 console.error(error);
@@ -1007,7 +1002,7 @@
 
                     updateUserPortalUI(found);
                     enterApp();
-                    switchTab('userportal');
+                    switchTab('userportal'); // Pastikan selalu reset ke portal santri
                 } else {
                     showAlert("Akun terotentikasi, namun data pendaftar tidak ditemukan.", "Peringatan", "amber");
                 }
@@ -1097,10 +1092,18 @@
             }
         };
 
+        // --- LOGOUT / SIGN OUT (MEMBERSIHKAN FORM & SESSION) ---
         window.logout = async function() {
             try { await signOut(auth); } catch(e) { console.error(e); }
             currentUserRole = null;
             currentLoggedInUser = null;
+
+            // Kosongkan seluruh input pada form login agar tidak tersisa
+            document.getElementById('adminEmail').value = '';
+            document.getElementById('adminPassword').value = '';
+            document.getElementById('userUsername').value = '';
+            document.getElementById('userPassword').value = '';
+
             document.getElementById('mainAppContainer').classList.add('hidden');
             document.getElementById('authContainer').classList.remove('hidden');
         };
@@ -1425,7 +1428,6 @@
             };
 
             try {
-                // Pastikan akun santri juga terdaftar di Firebase Auth agar bisa login
                 const authEmail = `${regNoVal.toLowerCase()}@piat6bondowoso.sch.id`;
                 try {
                     const secApp = initializeApp(firebaseConfig, "SecApp_" + Date.now());
