@@ -473,7 +473,7 @@
                             <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
                                 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                                     <div>
-                                        <h3 class="text-base font-bold text-slate-900">Unggah Berkas Persyaratan</h3>
+                                        <h3 class="text-base font-bold text-slate-900">Unggah Berkas Persyaratan (Google Drive)</h3>
                                         <p class="text-xs text-slate-500">Lengkapi berkas wajib (Raport, Ijazah, Surat Sehat, KK, Akta Kelahiran).</p>
                                     </div>
                                     <span id="docStatusSummary" class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">Belum Lengkap</span>
@@ -1617,7 +1617,85 @@
             });
         };
 
-        // --- ENHANCED USER PORTAL (REAL DOCUMENT UPLOAD FEATURE) ---
+        // --- GOOGLE DRIVE UPLOAD VIA GOOGLE APPS SCRIPT & USER DOCUMENTS ---
+        window.uploadUserDocument = async function(docKey, docLabel) {
+            if (!currentLoggedInUser) return;
+
+            // Buat input file secara dinamis
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.pdf,image/*';
+            
+            fileInput.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                showAlert("Sedang mengunggah berkas ke Google Drive Pesantren...", "Mohon Tunggu", "emerald");
+
+                const reader = new FileReader();
+                reader.onload = async function(uploadEvent) {
+                    const base64Data = uploadEvent.target.result;
+                    
+                    const payload = {
+                        filename: `${currentLoggedInUser.regNo}_${docKey}_${file.name}`,
+                        mimeType: file.type,
+                        base64: base64Data
+                    };
+
+                    try {
+                        // URL Web App dari Google Apps Script Anda
+                        const scriptURL = "https://script.google.com/macros/s/AKfycbxq_pEmvTEwVVHOA54kx9sSNNCjgVeNoyu7Eson1HOTcEacaJM81g3N6ThvG1EHQud7Aw/exec";
+                        
+                        const response = await fetch(scriptURL, {
+                            method: 'POST',
+                            body: JSON.stringify(payload)
+                        });
+                        const result = await response.json();
+
+                        if (result.status === 'success') {
+                            // Simpan link Google Drive ke Firestore
+                            const updatedDocs = currentLoggedInUser.documents || {};
+                            updatedDocs[docKey] = {
+                                uploaded: true,
+                                url: result.url,
+                                fileName: file.name
+                            };
+
+                            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'applicants', currentLoggedInUser.id), { documents: updatedDocs });
+                            currentLoggedInUser.documents = updatedDocs;
+                            renderUserDocuments();
+                            
+                            showAlert(`Berkas "${docLabel}" berhasil diunggah dan tersimpan di Google Drive!`, "Sukses", "emerald");
+                        } else {
+                            showAlert("Gagal mengunggah ke Google Drive: " + result.message, "Error", "rose");
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        showAlert("Terjadi kesalahan koneksi saat upload.", "Error", "rose");
+                    }
+                };
+                reader.readAsDataURL(file);
+            };
+
+            fileInput.click();
+        };
+
+        window.removeUserDocument = async function(docKey) {
+            if (!currentLoggedInUser) return;
+            const updatedDocs = currentLoggedInUser.documents || {};
+            updatedDocs[docKey] = false;
+
+            try {
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'applicants', currentLoggedInUser.id), { documents: updatedDocs });
+                currentLoggedInUser.documents = updatedDocs;
+                renderUserDocuments();
+                showAlert("Berkas berhasil dihapus.", "Informasi", "amber");
+            } catch (err) {
+                console.error(err);
+                showAlert("Gagal menghapus berkas.", "Error", "rose");
+            }
+        };
+
         window.renderUserDocuments = function() {
             const container = document.getElementById('documentChecklistContainer');
             if (!container || !currentLoggedInUser) return;
@@ -1630,6 +1708,7 @@
                 const docVal = userDocs[docItem.key];
                 const isUploaded = typeof docVal === 'object' ? docVal.uploaded : !!docVal;
                 const fileName = typeof docVal === 'object' && docVal.fileName ? docVal.fileName : '';
+                const fileUrl = typeof docVal === 'object' && docVal.url ? docVal.url : '';
 
                 if (isUploaded) uploadedCount++;
 
@@ -1649,9 +1728,10 @@
                     </div>
                     <div class="flex items-center space-x-2">
                         ${isUploaded ? `
+                            ${fileUrl ? `<a href="${fileUrl}" target="_blank" class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all"><i class="fa-solid fa-eye mr-1"></i>Lihat</a>` : ''}
                             <button onclick="removeUserDocument('${docItem.key}')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all">Hapus</button>
                         ` : `
-                            <button onclick="openUploadModal('${docItem.key}', '${docItem.label}')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs transition-all">Upload Berkas</button>
+                            <button onclick="uploadUserDocument('${docItem.key}', '${docItem.label}')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs transition-all">Upload Berkas</button>
                         `}
                     </div>
                 `;
@@ -1665,66 +1745,6 @@
             } else {
                 summaryEl.innerText = `Kurang ${REQUIRED_DOCS.length - uploadedCount} Berkas`;
                 summaryEl.className = "px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800";
-            }
-        };
-
-        window.openUploadModal = function(docKey, docLabel) {
-            const modalHtml = `
-                <div class="space-y-4">
-                    <p class="text-xs text-slate-600">Silakan pilih file dokumen <b>${docLabel}</b> (PDF, JPG, PNG maksimal 5MB) dari perangkat Anda:</p>
-                    <input type="file" id="modalFileInput" accept=".pdf,.jpg,.jpeg,.png" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
-                    <div class="flex justify-end space-x-3 pt-2">
-                        <button type="button" onclick="closeModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl">Batal</button>
-                        <button type="button" onclick="submitUserDocument('${docKey}')" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-md">Unggah Berkas</button>
-                    </div>
-                </div>
-            `;
-            showAlert(`Unggah Berkas: ${docLabel}`, "Upload Dokumen", "emerald", modalHtml);
-        };
-
-        window.submitUserDocument = async function(docKey) {
-            const fileInput = document.getElementById('modalFileInput');
-            if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-                alert("Pilih file terlebih dahulu!");
-                return;
-            }
-            const file = fileInput.files[0];
-            const fileName = file.name;
-
-            if (!currentLoggedInUser) return;
-            const updatedDocs = currentLoggedInUser.documents || {};
-            
-            updatedDocs[docKey] = {
-                uploaded: true,
-                fileName: fileName,
-                uploadedAt: new Date().toISOString()
-            };
-
-            try {
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'applicants', currentLoggedInUser.id), { documents: updatedDocs });
-                currentLoggedInUser.documents = updatedDocs;
-                closeModal();
-                renderUserDocuments();
-                showAlert(`Berkas ${fileName} berhasil diunggah dan disimpan ke sistem!`, "Sukses", "emerald");
-            } catch (err) {
-                console.error(err);
-                showAlert("Gagal mengunggah berkas ke database.", "Error", "rose");
-            }
-        };
-
-        window.removeUserDocument = async function(docKey) {
-            if (!currentLoggedInUser) return;
-            const updatedDocs = currentLoggedInUser.documents || {};
-            updatedDocs[docKey] = false;
-
-            try {
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'applicants', currentLoggedInUser.id), { documents: updatedDocs });
-                currentLoggedInUser.documents = updatedDocs;
-                renderUserDocuments();
-                showAlert("Berkas berhasil dihapus.", "Informasi", "amber");
-            } catch (err) {
-                console.error(err);
-                showAlert("Gagal menghapus berkas.", "Error", "rose");
             }
         };
 
