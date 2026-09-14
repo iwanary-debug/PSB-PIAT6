@@ -177,7 +177,7 @@
                         </div>
                         <div class="flex items-center space-x-2">
                             <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
-                                <span class="w-2 h-2 mr-1.5 bg-emerald-500 rounded-full animate-pulse"></span> Gelombang Aktif
+                                <span class="w-2 h-2 mr-1.5 bg-emerald-500 rounded-full animate-pulse"></span> Sinkronisasi DB Aktif
                             </span>
                         </div>
                     </div>
@@ -424,7 +424,7 @@
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                             <h1 class="text-xl font-bold text-slate-900">Pengaturan Gelombang PSB</h1>
-                            <p class="text-xs text-slate-500">Konfigurasi jadwal, kuota, biaya, dan status gelombang (Aktif, Menunggu, Non Aktif).</p>
+                            <p class="text-xs text-slate-500">Konfigurasi jadwal, kuota, biaya, dan status gelombang tersimpan permanen di database.</p>
                         </div>
                         <button onclick="openAddWaveModal()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center space-x-2">
                             <i class="fa-solid fa-plus"></i>
@@ -583,7 +583,7 @@
         </div>
     </div>
 
-    <!-- Modal Tambah/Edit Tugas Kanban (Dengan 3 Tanggal) -->
+    <!-- Modal Tambah/Edit Tugas Kanban -->
     <div id="taskModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm hidden">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-6 mx-4">
             <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
@@ -636,7 +636,7 @@
         </div>
     </div>
 
-    <!-- Modal Kelola & Tambah Gelombang (Dengan 3 Opsi Status) -->
+    <!-- Modal Kelola & Tambah Gelombang -->
     <div id="manageWaveModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm hidden">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-6 mx-4">
             <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
@@ -754,7 +754,7 @@
         </div>
     </div>
 
-    <!-- Modal Registrasi Mandiri Calon Santri (Membuat Akun Firebase Auth & Firestore) -->
+    <!-- Modal Registrasi Mandiri Calon Santri -->
     <div id="registerModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm hidden">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-6 mx-4">
             <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
@@ -806,11 +806,11 @@
         </div>
     </div>
 
-    <!-- Firebase & Logika Aplikasi (Menggunakan Firebase Authentication Asli) -->
+    <!-- Firebase & Logika Aplikasi (Full Sinkronisasi Firestore Real-Time) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, getDocs, getDoc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = typeof __firebase_config !== 'undefined' 
             ? JSON.parse(__firebase_config) 
@@ -835,10 +835,7 @@
         let currentLoggedInUser = null; 
         let tasksList = [];
         let applicantsList = [];
-        let wavesList = [
-            { id: 'wave_1', name: 'Gelombang 1', period: '1 Jan - 30 Apr 2026', quota: '100 Santri', fee: 'Rp 150.000', income: 'Rp 3.000.000', status: 'Aktif' },
-            { id: 'wave_2', name: 'Gelombang 2', period: '1 Mei - 30 Jun 2026', quota: '50 Santri', fee: 'Rp 175.000', income: 'Rp 3.500.000', status: 'Menunggu' }
-        ];
+        let wavesList = [];
 
         const REQUIRED_DOCS = [
             { key: 'raport', label: 'Raport Sekolah Asal' },
@@ -856,12 +853,12 @@
             document.getElementById('applicantForm').addEventListener('submit', handleSaveApplicant);
             document.getElementById('registerForm').addEventListener('submit', handlePublicRegister);
             
-            renderWavesCards();
             initializeDefaultDataIfEmpty();
         });
 
         async function initializeDefaultDataIfEmpty() {
             try {
+                // 1. Inisialisasi Default Tasks jika kosong
                 const tasksSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'tasks'));
                 if (tasksSnap.empty) {
                     await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'tasks'), {
@@ -874,6 +871,18 @@
                         desc: "Membuat desain grafis dan cetak brosur sosialisasi PSB 2026."
                     });
                 }
+
+                // 2. Inisialisasi Default Waves (Gelombang) jika kosong
+                const wavesSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'waves'));
+                if (wavesSnap.empty) {
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'waves'), {
+                        name: "Gelombang 1", period: "1 Jan - 30 Apr 2026", quota: "100 Santri", fee: "Rp 150.000", income: "Rp 3.000.000", status: "Aktif"
+                    });
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'waves'), {
+                        name: "Gelombang 2", period: "1 Mei - 30 Jun 2026", quota: "50 Santri", fee: "Rp 175.000", income: "Rp 3.500.000", status: "Menunggu"
+                    });
+                }
+
                 loadFirestoreData();
             } catch (err) {
                 console.error("Init default error:", err);
@@ -882,6 +891,7 @@
         }
 
         function loadFirestoreData() {
+            // Real-time listener untuk Tasks (Project Board)
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'tasks'), (snapshot) => {
                 tasksList = [];
                 snapshot.forEach((docSnap) => {
@@ -891,6 +901,7 @@
                 updateDashboardStats();
             });
 
+            // Real-time listener untuk Applicants (Data Pendaftar)
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'applicants'), (snapshot) => {
                 applicantsList = [];
                 snapshot.forEach((docSnap) => {
@@ -907,9 +918,18 @@
                     }
                 }
             });
+
+            // Real-time listener untuk Waves (Gelombang PSB)
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'waves'), (snapshot) => {
+                wavesList = [];
+                snapshot.forEach((docSnap) => {
+                    wavesList.push({ id: docSnap.id, ...docSnap.data() });
+                });
+                renderWavesCards();
+            });
         }
 
-        // --- LOGIN ADMIN (Firebase Auth) ---
+        // --- LOGIN ADMIN ---
         async function handleAdminLogin(e) {
             e.preventDefault();
             const email = document.getElementById('adminEmail').value.trim();
@@ -937,19 +957,16 @@
             }
         }
 
-        // --- LOGIN CALON SANTRI (Firebase Auth via No. Pendaftaran) ---
+        // --- LOGIN CALON SANTRI ---
         async function handleUserLogin(e) {
             e.preventDefault();
             const regNo = document.getElementById('userUsername').value.trim().toUpperCase();
             const password = document.getElementById('userPassword').value;
-
-            // Mapping Nomor Pendaftaran ke format email internal Firebase Auth
             const authEmail = `${regNo.toLowerCase()}@piat6bondowoso.sch.id`;
 
             try {
                 await signInWithEmailAndPassword(auth, authEmail, password);
                 
-                // Cari data detail pendaftar di Firestore
                 const querySnapshot = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'applicants'));
                 let found = null;
                 querySnapshot.forEach((docSnap) => {
@@ -984,7 +1001,7 @@
             }
         }
 
-        // --- PENDAFTARAN MANDIRI (Membuat Akun Firebase Auth & Dokumen Firestore) ---
+        // --- PENDAFTARAN MANDIRI ---
         async function handlePublicRegister(e) {
             e.preventDefault();
             const name = document.getElementById('regFullName').value;
@@ -997,10 +1014,8 @@
             const authEmail = `${regNo.toLowerCase()}@piat6bondowoso.sch.id`;
 
             try {
-                // 1. Buat akun di Firebase Authentication
                 await createUserWithEmailAndPassword(auth, authEmail, password);
 
-                // 2. Simpan profil lengkap di Firestore
                 const newData = {
                     regNo: regNo,
                     name: name,
@@ -1014,7 +1029,7 @@
 
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'applicants'), newData);
                 closeRegisterModal();
-                showAlert(`Pendaftaran berhasil! Nomor Pendaftaran Anda: ${regNo}. Silakan gunakan nomor ini dan kata sandi Anda untuk masuk portal.`, "Pendaftaran Sukses", "emerald");
+                showAlert(`Pendaftaran berhasil! Nomor Pendaftaran Anda: ${regNo}. Silakan gunakan nomor ini untuk masuk portal.`, "Pendaftaran Sukses", "emerald");
             } catch (err) {
                 console.error(err);
                 showAlert("Gagal melakukan pendaftaran: " + err.message, "Error", "rose");
@@ -1066,9 +1081,7 @@
         };
 
         window.logout = async function() {
-            try {
-                await signOut(auth);
-            } catch(e) { console.error(e); }
+            try { await signOut(auth); } catch(e) { console.error(e); }
             currentUserRole = null;
             currentLoggedInUser = null;
             document.getElementById('mainAppContainer').classList.add('hidden');
@@ -1228,7 +1241,7 @@
             document.getElementById('taskModal').classList.remove('hidden');
         };
 
-        function handleSaveTask(e) {
+        async function handleSaveTask(e) {
             e.preventDefault();
             const id = document.getElementById('taskId').value;
             const data = {
@@ -1240,17 +1253,15 @@
                 execDate: document.getElementById('taskExecDate').value,
                 dueDate: document.getElementById('taskDueDate').value
             };
-            (async () => {
-                try {
-                    if (id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tasks', id), data);
-                    else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'tasks'), data);
-                    closeTaskModal();
-                    showAlert("Tugas berhasil disimpan!");
-                } catch (err) {
-                    console.error(err);
-                    showAlert("Gagal menyimpan tugas.", "Error", "rose");
-                }
-            })();
+            try {
+                if (id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tasks', id), data);
+                else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'tasks'), data);
+                closeTaskModal();
+                showAlert("Tugas berhasil disimpan ke database!");
+            } catch (err) {
+                console.error(err);
+                showAlert("Gagal menyimpan tugas.", "Error", "rose");
+            }
         }
 
         window.moveTaskStatus = async function(id, newStatus) {
@@ -1372,7 +1383,7 @@
             document.getElementById('applicantModal').classList.remove('hidden');
         };
 
-        function handleSaveApplicant(e) {
+        async function handleSaveApplicant(e) {
             e.preventDefault();
             const id = document.getElementById('applicantId').value;
             const statusVal = document.getElementById('appStatus').value;
@@ -1395,35 +1406,137 @@
                 documents: existingApp ? (existingApp.documents || {}) : { raport: false, ijazah: false, sehat: false, kk: false, akta: false }
             };
 
-            (async () => {
-                try {
-                    if (id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'applicants', id), data);
-                    else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'applicants'), data);
-                    closeApplicantModal();
-                    showAlert("Data pendaftar berhasil disimpan!");
+            try {
+                if (id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'applicants', id), data);
+                else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'applicants'), data);
+                closeApplicantModal();
+                showAlert("Data pendaftar berhasil disimpan ke database!");
 
-                    if (statusChanged && phoneVal) {
-                        const waText = encodeURIComponent(`Assalamu'alaikum Wali dari ${nameVal} (${regNoVal}). Status seleksi PSB PIAT 6 Bondowoso Anda telah diperbarui menjadi: *${statusVal}*. Silakan cek portal pendaftar.`);
-                        const waLink = `https://wa.me/${phoneVal.replace(/^0/, '62')}?text=${waText}`;
-                        setTimeout(() => {
-                            showAlert(`Notifikasi WhatsApp otomatis terkirim ke wali santri (${phoneVal}) karena status berubah menjadi "${statusVal}".`, "Simulasi WhatsApp Terkirim", "emerald", `
-                                <div class="mt-2 p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-xs text-emerald-800">
-                                    <p class="font-bold mb-1"><i class="fa-brands fa-whatsapp mr-1 text-emerald-600"></i> Pesan WhatsApp:</p>
-                                    <p class="italic">"Assalamu'alaikum Wali dari ${nameVal}. Status seleksi PSB PIAT 6 Bondowoso Anda menjadi: ${statusVal}."</p>
-                                    <a href="${waLink}" target="_blank" class="inline-mt-2 mt-2 px-3 py-1.5 bg-emerald-600 text-white rounded-lg font-bold text-[11px] inline-block hover:bg-emerald-700">Buka Link WhatsApp Asli</a>
-                                </div>
-                            `);
-                        }, 500);
-                    }
-                } catch (err) {
-                    console.error(err);
-                    showAlert("Gagal menyimpan data pendaftar.", "Error", "rose");
+                if (statusChanged && phoneVal) {
+                    const waText = encodeURIComponent(`Assalamu'alaikum Wali dari ${nameVal} (${regNoVal}). Status seleksi PSB PIAT 6 Bondowoso Anda telah diperbarui menjadi: *${statusVal}*. Silakan cek portal pendaftar.`);
+                    const waLink = `https://wa.me/${phoneVal.replace(/^0/, '62')}?text=${waText}`;
+                    setTimeout(() => {
+                        showAlert(`Notifikasi WhatsApp otomatis terkirim ke wali santri (${phoneVal}) karena status berubah menjadi "${statusVal}".`, "Simulasi WhatsApp Terkirim", "emerald", `
+                            <div class="mt-2 p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-xs text-emerald-800">
+                                <p class="font-bold mb-1"><i class="fa-brands fa-whatsapp mr-1 text-emerald-600"></i> Pesan WhatsApp:</p>
+                                <p class="italic">"Assalamu'alaikum Wali dari ${nameVal}. Status seleksi PSB PIAT 6 Bondowoso Anda menjadi: ${statusVal}."</p>
+                                <a href="${waLink}" target="_blank" class="inline-mt-2 mt-2 px-3 py-1.5 bg-emerald-600 text-white rounded-lg font-bold text-[11px] inline-block hover:bg-emerald-700">Buka Link WhatsApp Asli</a>
+                            </div>
+                        `);
+                    }, 500);
                 }
-            })();
+            } catch (err) {
+                console.error(err);
+                showAlert("Gagal menyimpan data pendaftar.", "Error", "rose");
+            }
         }
 
         window.deleteApplicantItem = async function(id) {
             try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'applicants', id)); showAlert("Data pendaftar berhasil dihapus."); } catch (err) { console.error(err); }
+        };
+
+        // --- WAVES MANAGEMENT (GELOMBANG PSB) ---
+        async function handleSaveWave(e) {
+            e.preventDefault();
+            const id = document.getElementById('waveId').value;
+            const waveData = {
+                name: document.getElementById('waveName').value,
+                period: document.getElementById('wavePeriod').value,
+                quota: document.getElementById('waveQuota').value,
+                fee: document.getElementById('waveFee').value,
+                income: document.getElementById('waveIncome').value,
+                status: document.getElementById('waveStatus').value
+            };
+
+            try {
+                if (id) {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'waves', id), waveData);
+                } else {
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'waves'), waveData);
+                }
+                toggleManageWaveModal();
+                showAlert("Gelombang berhasil diperbarui & disimpan permanen di database!", "Sukses", "emerald");
+            } catch (err) {
+                console.error(err);
+                showAlert("Gagal menyimpan gelombang.", "Error", "rose");
+            }
+        }
+
+        window.openAddWaveModal = function() {
+            document.getElementById('waveId').value = "";
+            document.getElementById('waveName').value = "";
+            document.getElementById('wavePeriod').value = "";
+            document.getElementById('waveQuota').value = "";
+            document.getElementById('waveFee').value = "";
+            document.getElementById('waveIncome').value = "";
+            document.getElementById('waveStatus').value = "Aktif";
+            document.getElementById('waveFormTitle').innerText = "Tambah Gelombang Baru";
+            document.getElementById('manageWaveModal').classList.remove('hidden');
+        };
+
+        window.openManageWaveModalForEdit = function(id) {
+            const wave = wavesList.find(w => w.id === id);
+            if (!wave) return;
+            document.getElementById('waveId').value = wave.id;
+            document.getElementById('waveName').value = wave.name;
+            document.getElementById('wavePeriod').value = wave.period;
+            document.getElementById('waveQuota').value = wave.quota;
+            document.getElementById('waveFee').value = wave.fee;
+            document.getElementById('waveIncome').value = wave.income || 'Rp 3.000.000';
+            document.getElementById('waveStatus').value = wave.status || 'Aktif';
+            document.getElementById('waveFormTitle').innerText = `Kelola ${wave.name}`;
+            document.getElementById('manageWaveModal').classList.remove('hidden');
+        };
+
+        window.toggleManageWaveModal = function() {
+            document.getElementById('manageWaveModal').classList.toggle('hidden');
+        };
+
+        window.renderWavesCards = function() {
+            const container = document.getElementById('wavesCardsContainer');
+            if (!container) return;
+            container.innerHTML = '';
+            wavesList.forEach((wave) => {
+                const status = wave.status || 'Aktif';
+                let badgeClass = 'bg-emerald-600 text-white';
+                if (status === 'Menunggu') badgeClass = 'bg-amber-500 text-white';
+                if (status === 'Non Aktif') badgeClass = 'bg-slate-400 text-white';
+
+                const card = document.createElement('div');
+                card.className = `bg-white p-6 rounded-2xl border-2 ${status === 'Aktif' ? 'border-emerald-500 shadow-sm' : 'border-slate-200 shadow-xs'} relative overflow-hidden`;
+                card.innerHTML = `
+                    <div class="absolute top-0 right-0 ${badgeClass} text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider">${status}</div>
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="w-10 h-10 rounded-xl ${status === 'Aktif' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'} flex items-center justify-center font-bold">
+                            <i class="fa-solid fa-layer-group"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900">${wave.name}</h3>
+                            <p class="text-xs text-slate-500">Tahun Ajaran 2026/2027</p>
+                        </div>
+                    </div>
+                    <div class="space-y-2 text-xs mb-6">
+                        <div class="flex justify-between py-1.5 border-b border-slate-100">
+                            <span class="text-slate-500 font-semibold">Periode:</span>
+                            <span class="font-bold text-slate-800">${wave.period}</span>
+                        </div>
+                        <div class="flex justify-between py-1.5 border-b border-slate-100">
+                            <span class="text-slate-500 font-semibold">Kuota Santri:</span>
+                            <span class="font-bold text-slate-800">${wave.quota}</span>
+                        </div>
+                        <div class="flex justify-between py-1.5 border-b border-slate-100">
+                            <span class="text-slate-500 font-semibold">Biaya Pendaftaran:</span>
+                            <span class="font-bold text-emerald-600">${wave.fee}</span>
+                        </div>
+                        <div class="flex justify-between py-1.5">
+                            <span class="text-slate-500 font-semibold">Nominal Uang Masuk:</span>
+                            <span class="font-bold text-slate-900">${wave.income || 'Rp 3.000.000'}</span>
+                        </div>
+                    </div>
+                    <button onclick="openManageWaveModalForEdit('${wave.id}')" class="w-full py-2.5 ${status === 'Aktif' ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700' : 'bg-slate-50 hover:bg-slate-100 text-slate-700'} font-bold rounded-xl text-xs transition-all">Kelola Gelombang</button>
+                `;
+                container.appendChild(card);
+            });
         };
 
         // --- USER PORTAL (DOCUMENTS) ---
@@ -1504,109 +1617,6 @@
             }
             renderUserDocuments();
         }
-
-        // --- WAVES MANAGEMENT ---
-        function handleSaveWave(e) {
-            e.preventDefault();
-            const id = document.getElementById('waveId').value;
-            const waveData = {
-                id: id || 'wave_' + (wavesList.length + 1),
-                name: document.getElementById('waveName').value,
-                period: document.getElementById('wavePeriod').value,
-                quota: document.getElementById('waveQuota').value,
-                fee: document.getElementById('waveFee').value,
-                income: document.getElementById('waveIncome').value,
-                status: document.getElementById('waveStatus').value
-            };
-
-            if (id) {
-                const idx = wavesList.findIndex(w => w.id === id);
-                if (idx !== -1) wavesList[idx] = waveData;
-            } else {
-                wavesList.push(waveData);
-            }
-
-            document.getElementById('manageWaveModal').classList.add('hidden');
-            renderWavesCards();
-            showAlert("Gelombang berhasil diperbarui & disimpan!", "Sukses", "emerald");
-        }
-
-        window.openAddWaveModal = function() {
-            document.getElementById('waveId').value = "";
-            document.getElementById('waveName').value = "";
-            document.getElementById('wavePeriod').value = "";
-            document.getElementById('waveQuota').value = "";
-            document.getElementById('waveFee').value = "";
-            document.getElementById('waveIncome').value = "";
-            document.getElementById('waveStatus').value = "Aktif";
-            document.getElementById('waveFormTitle').innerText = "Tambah Gelombang Baru";
-            document.getElementById('manageWaveModal').classList.remove('hidden');
-        };
-
-        window.openManageWaveModalForEdit = function(id) {
-            const wave = wavesList.find(w => w.id === id);
-            if (!wave) return;
-            document.getElementById('waveId').value = wave.id;
-            document.getElementById('waveName').value = wave.name;
-            document.getElementById('wavePeriod').value = wave.period;
-            document.getElementById('waveQuota').value = wave.quota;
-            document.getElementById('waveFee').value = wave.fee;
-            document.getElementById('waveIncome').value = wave.income || 'Rp 3.000.000';
-            document.getElementById('waveStatus').value = wave.status || 'Aktif';
-            document.getElementById('waveFormTitle').innerText = `Kelola ${wave.name}`;
-            document.getElementById('manageWaveModal').classList.remove('hidden');
-        };
-
-        window.toggleManageWaveModal = function() {
-            document.getElementById('manageWaveModal').classList.toggle('hidden');
-        };
-
-        window.renderWavesCards = function() {
-            const container = document.getElementById('wavesCardsContainer');
-            if (!container) return;
-            container.innerHTML = '';
-            wavesList.forEach((wave) => {
-                const status = wave.status || 'Aktif';
-                let badgeClass = 'bg-emerald-600 text-white';
-                if (status === 'Menunggu') badgeClass = 'bg-amber-500 text-white';
-                if (status === 'Non Aktif') badgeClass = 'bg-slate-400 text-white';
-
-                const card = document.createElement('div');
-                card.className = `bg-white p-6 rounded-2xl border-2 ${status === 'Aktif' ? 'border-emerald-500 shadow-sm' : 'border-slate-200 shadow-xs'} relative overflow-hidden`;
-                card.innerHTML = `
-                    <div class="absolute top-0 right-0 ${badgeClass} text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider">${status}</div>
-                    <div class="flex items-center space-x-3 mb-4">
-                        <div class="w-10 h-10 rounded-xl ${status === 'Aktif' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'} flex items-center justify-center font-bold">
-                            <i class="fa-solid fa-layer-group"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-base font-bold text-slate-900">${wave.name}</h3>
-                            <p class="text-xs text-slate-500">Tahun Ajaran 2026/2027</p>
-                        </div>
-                    </div>
-                    <div class="space-y-2 text-xs mb-6">
-                        <div class="flex justify-between py-1.5 border-b border-slate-100">
-                            <span class="text-slate-500 font-semibold">Periode:</span>
-                            <span class="font-bold text-slate-800">${wave.period}</span>
-                        </div>
-                        <div class="flex justify-between py-1.5 border-b border-slate-100">
-                            <span class="text-slate-500 font-semibold">Kuota Santri:</span>
-                            <span class="font-bold text-slate-800">${wave.quota}</span>
-                        </div>
-                        <div class="flex justify-between py-1.5 border-b border-slate-100">
-                            <span class="text-slate-500 font-semibold">Biaya Pendaftaran:</span>
-                            <span class="font-bold text-emerald-600">${wave.fee}</span>
-                        </div>
-                        <div class="flex justify-between py-1.5">
-                            <span class="text-slate-500 font-semibold">Nominal Uang Masuk:</span>
-                            <span class="font-bold text-slate-900">${wave.income || 'Rp 3.000.000'}</span>
-                        </div>
-                    </div>
-                    <button onclick="openManageWaveModalForEdit('${wave.id}')" class="w-full py-2.5 ${status === 'Aktif' ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700' : 'bg-slate-50 hover:bg-slate-100 text-slate-700'} font-bold rounded-xl text-xs transition-all">Kelola Gelombang</button>
-                `;
-                container.appendChild(card);
-            });
-        };
 
         window.exportApplicantsExcel = function() {
             if (!applicantsList || applicantsList.length === 0) {
