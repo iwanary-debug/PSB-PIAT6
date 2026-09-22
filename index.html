@@ -17,6 +17,11 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        @media print {
+            body * { visibility: hidden; }
+            #finalReportModalContent, #finalReportModalContent * { visibility: visible; }
+            #finalReportModalContent { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 20px; }
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
@@ -72,7 +77,10 @@
                     <label class="block text-xs font-bold text-slate-700 mb-1.5">Kata Sandi</label>
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400"><i class="fa-solid fa-lock"></i></span>
-                        <input type="password" id="adminPassword" required placeholder="••••••••" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-emerald-600 focus:bg-white transition-all">
+                        <input type="password" id="adminPassword" required placeholder="••••••••" class="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-emerald-600 focus:bg-white transition-all">
+                        <button type="button" onclick="togglePassword('adminPassword', 'adminEyeIcon')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600">
+                            <i id="adminEyeIcon" class="fa-solid fa-eye text-xs"></i>
+                        </button>
                     </div>
                 </div>
                 <button type="submit" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/30 transition-all text-sm flex items-center justify-center space-x-2">
@@ -94,7 +102,10 @@
                     <label class="block text-xs font-bold text-slate-700 mb-1.5">Kata Sandi / PIN</label>
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400"><i class="fa-solid fa-key"></i></span>
-                        <input type="password" id="userPassword" required placeholder="••••••••" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-emerald-600 focus:bg-white transition-all">
+                        <input type="password" id="userPassword" required placeholder="••••••••" class="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-emerald-600 focus:bg-white transition-all">
+                        <button type="button" onclick="togglePassword('userPassword', 'userEyeIcon')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600">
+                            <i id="userEyeIcon" class="fa-solid fa-eye text-xs"></i>
+                        </button>
                     </div>
                 </div>
                 <button type="submit" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/30 transition-all text-sm flex items-center justify-center space-x-2">
@@ -432,17 +443,21 @@
                     <div id="wavesCardsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
                 </section>
 
-                <!-- View Reports & Budget (Laporan & Anggaran Baru) -->
+                <!-- View Reports & Budget (Laporan & Anggaran + Generate Laporan Panitia) -->
                 <section id="view-reports" class="space-y-6 hidden">
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                             <h1 class="text-xl font-bold text-slate-900">Pusat Laporan & Anggaran (RAB PSB)</h1>
                             <p class="text-xs text-slate-500">Kelola anggaran pemasukan/pengeluaran panitia serta generate laporan komprehensif.</p>
                         </div>
-                        <div class="flex items-center space-x-3">
+                        <div class="flex flex-wrap items-center gap-3">
+                            <button onclick="openFinalReportModal()" class="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl text-xs shadow-md shadow-purple-600/20 transition-all flex items-center space-x-2">
+                                <i class="fa-solid fa-file-lines"></i>
+                                <span>Generate Laporan Akhir Panitia</span>
+                            </button>
                             <button onclick="exportFinancialReportExcel()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-md shadow-blue-600/20 transition-all flex items-center space-x-2">
                                 <i class="fa-solid fa-file-excel"></i>
-                                <span>Export Laporan Keuangan</span>
+                                <span>Export Keuangan</span>
                             </button>
                             <button onclick="openAddBudgetModal()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center space-x-2">
                                 <i class="fa-solid fa-plus"></i>
@@ -451,24 +466,26 @@
                         </div>
                     </div>
 
-                    <!-- Ringkasan Finansial Grid -->
+                    <!-- Ringkasan Finansial Grid (Klikable Cards) -->
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center space-x-4">
+                        <div onclick="openBudgetDetailModal('Pemasukan')" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center space-x-4 cursor-pointer hover:border-emerald-500 hover:shadow-md transition-all">
                             <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-lg font-bold">
                                 <i class="fa-solid fa-arrow-down"></i>
                             </div>
                             <div>
-                                <p class="text-xs text-slate-500 font-semibold">Total Pemasukan PSB</p>
+                                <p class="text-xs text-slate-500 font-semibold flex items-center">Total Pemasukan PSB <i class="fa-solid fa-circle-info ml-1.5 text-[10px] text-emerald-600"></i></p>
                                 <h3 id="reportTotalIncome" class="text-lg font-bold text-emerald-600">Rp. 0</h3>
+                                <span class="text-[10px] text-slate-400">Klik untuk lihat rincian</span>
                             </div>
                         </div>
-                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center space-x-4">
+                        <div onclick="openBudgetDetailModal('Pengeluaran')" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center space-x-4 cursor-pointer hover:border-rose-500 hover:shadow-md transition-all">
                             <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center text-lg font-bold">
                                 <i class="fa-solid fa-arrow-up"></i>
                             </div>
                             <div>
-                                <p class="text-xs text-slate-500 font-semibold">Total Pengeluaran / RAB</p>
+                                <p class="text-xs text-slate-500 font-semibold flex items-center">Total Pengeluaran / RAB <i class="fa-solid fa-circle-info ml-1.5 text-[10px] text-rose-600"></i></p>
                                 <h3 id="reportTotalExpense" class="text-lg font-bold text-rose-600">Rp. 0</h3>
+                                <span class="text-[10px] text-slate-400">Klik untuk lihat rincian belanja</span>
                             </div>
                         </div>
                         <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center space-x-4">
@@ -608,6 +625,132 @@
                 <span class="text-[10px] font-bold">Portal Saya</span>
             </button>
         </nav>
+    </div>
+
+    <!-- Modal Generate Laporan Akhir Panitia Komprehensif -->
+    <div id="finalReportModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm hidden">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl p-8 mx-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div id="finalReportModalContent" class="space-y-6">
+                <!-- Kop Surat Resmi -->
+                <div class="flex items-center space-x-6 border-b-2 border-slate-900 pb-6">
+                    <img src="LOGO_PIAT_BEGRON.jpg" alt="Logo" class="h-16 object-contain" onerror="this.onerror=null;this.src='https://placehold.co/120x60/065f46/ffffff?text=PIAT+6'">
+                    <div class="text-center flex-1">
+                        <h2 class="text-xs font-bold uppercase tracking-wide text-slate-800">YAYASAN PERHIMPUNAN AL-IRSYAD BONDOWOSO</h2>
+                        <h1 class="text-lg font-extrabold uppercase text-emerald-800">PESANTREN ISLAM AL-IRSYAD TENGARAN 6 BONDOWOSO</h1>
+                        <p class="text-[10px] text-slate-600 mt-1">Jl. Pesantren Al-Irsyad No. 6, Bondowoso, Jawa Timur | Website: piat6bondowoso.sch.id</p>
+                    </div>
+                </div>
+
+                <div class="text-center space-y-1">
+                    <h3 class="text-sm font-bold text-slate-900 uppercase underline">LAPORAN KOMPREHENSIF KEGIATAN PENERIMAAN SANTRI BARU (PSB)</h3>
+                    <p class="text-xs text-slate-500">Tahun Ajaran 2026 / 2027 • Laporan Lengkap Kegiatan & Anggaran</p>
+                </div>
+
+                <!-- 1. Ringkasan Statistik Pendaftar per Jenjang -->
+                <div class="space-y-2">
+                    <h4 class="text-xs font-bold uppercase text-slate-900 bg-slate-100 p-2 rounded-lg">1. Statistik Pendaftar Berdasarkan Jenjang / Program</h4>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                            <span class="text-slate-500 block">Mutawassith (MTw)</span>
+                            <span id="repMTw" class="text-base font-bold text-slate-900">0 Santri</span>
+                        </div>
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                            <span class="text-slate-500 block">I'dad Muallimin (IM)</span>
+                            <span id="repIM" class="text-base font-bold text-slate-900">0 Santri</span>
+                        </div>
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                            <span class="text-slate-500 block">I'dad Lughowy (IL)</span>
+                            <span id="repIL" class="text-base font-bold text-slate-900">0 Santri</span>
+                        </div>
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                            <span class="text-slate-500 block">Akselerasi</span>
+                            <span id="repAks" class="text-base font-bold text-slate-900">0 Santri</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Status Seleksi & Kinerja Panitia -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+                    <div class="space-y-2">
+                        <h4 class="font-bold uppercase text-slate-900 bg-slate-100 p-2 rounded-lg">2. Rekapitulasi Status Seleksi</h4>
+                        <ul class="space-y-1.5 text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                            <li class="flex justify-between border-b border-slate-200 pb-1"><span>Total Keseluruhan Pendaftar:</span> <strong id="repTotalApp">0</strong></li>
+                            <li class="flex justify-between border-b border-slate-200 pb-1"><span>Menunggu Verifikasi Berkas:</span> <strong id="repPendingApp">0</strong></li>
+                            <li class="flex justify-between border-b border-slate-200 pb-1"><span>Dinyatakan Diterima:</span> <strong id="repAcceptedApp" class="text-emerald-700">0</strong></li>
+                            <li class="flex justify-between pb-1"><span>Tidak Diterima / Tes Ulang:</span> <strong id="repRejectedApp" class="text-rose-600">0</strong></li>
+                        </ul>
+                    </div>
+                    <div class="space-y-2">
+                        <h4 class="font-bold uppercase text-slate-900 bg-slate-100 p-2 rounded-lg">3. Progres Kinerja Project Board</h4>
+                        <ul class="space-y-1.5 text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                            <li class="flex justify-between border-b border-slate-200 pb-1"><span>Total Rencana Tugas Panitia:</span> <strong id="repTotalTasks">0</strong></li>
+                            <li class="flex justify-between border-b border-slate-200 pb-1"><span>Tugas Sedang Dikerjakan:</span> <strong id="repInProgressTasks">0</strong></li>
+                            <li class="flex justify-between pb-1"><span>Tugas Selesai (Done):</span> <strong id="repDoneTasks" class="text-emerald-700">0</strong></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 3. Rincian Keuangan Lengkap -->
+                <div class="space-y-2 text-xs">
+                    <h4 class="font-bold uppercase text-slate-900 bg-slate-100 p-2 rounded-lg">4. Rincian Anggaran Pemasukan & Pengeluaran (RAB)</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                        <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-200">
+                            <span class="text-emerald-800 block font-semibold">Total Pemasukan</span>
+                            <span id="repIncome" class="text-sm font-extrabold text-emerald-900">Rp 0</span>
+                        </div>
+                        <div class="p-3 bg-rose-50 rounded-xl border border-rose-200">
+                            <span class="text-rose-800 block font-semibold">Total Pengeluaran / Belanja</span>
+                            <span id="repExpense" class="text-sm font-extrabold text-rose-900">Rp 0</span>
+                        </div>
+                        <div class="p-3 bg-blue-50 rounded-xl border border-blue-200">
+                            <span class="text-blue-800 block font-semibold">Saldo Kas Bersih</span>
+                            <span id="repBalance" class="text-sm font-extrabold text-blue-900">Rp 0</span>
+                        </div>
+                    </div>
+                    <div id="repBudgetDetailsList" class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1 max-h-40 overflow-y-auto">
+                        <!-- Diisi via JS -->
+                    </div>
+                </div>
+
+                <!-- Tanda Tangan -->
+                <div class="pt-6 grid grid-cols-2 gap-8 text-center text-xs text-slate-800">
+                    <div>
+                        <p>Mengetahui,</p>
+                        <p class="font-bold mb-12">Mudir Pesantren / Kepala Kampus</p>
+                        <p class="font-bold underline">Ustadz Dr. H. Ahmad Zainuddin, Lc., M.A.</p>
+                    </div>
+                    <div>
+                        <p>Bondowoso, <span id="reportCurrentDateStr">22 September 2026</span></p>
+                        <p class="font-bold mb-12">Ketua Panitia PSB 2026/2027</p>
+                        <p class="font-bold underline">Ustadz Fulan , S.H.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-6 mt-6 border-t border-slate-100">
+                <button onclick="closeFinalReportModal()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all">Tutup</button>
+                <button onclick="window.print()" class="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-xl transition-all shadow-md shadow-purple-600/20 flex items-center space-x-2">
+                    <i class="fa-solid fa-print"></i>
+                    <span>Cetak / Print Laporan</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Detail Pemasukan / Pengeluaran (Klik Card Keuangan) -->
+    <div id="budgetDetailModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm hidden">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-6 mx-4">
+            <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                <h3 id="budgetDetailModalTitle" class="text-base font-bold text-slate-900">Rincian Keuangan</h3>
+                <button onclick="closeBudgetDetailModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div id="budgetDetailModalContent" class="space-y-3 max-h-80 overflow-y-auto text-xs">
+                <!-- Dinamis via JS -->
+            </div>
+            <div class="flex justify-end pt-4 mt-4 border-t border-slate-100">
+                <button onclick="closeBudgetDetailModal()" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all">Tutup</button>
+            </div>
+        </div>
     </div>
 
     <!-- Modal Detail Tugas Kanban -->
@@ -778,7 +921,7 @@
         </div>
     </div>
 
-    <!-- Modal Tambah/Edit Item Anggaran (Baru) -->
+    <!-- Modal Tambah/Edit Item Anggaran (Dengan Pilihan Dinamis) -->
     <div id="budgetModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm hidden">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-6 mx-4">
             <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
@@ -787,30 +930,42 @@
             </div>
             <form id="budgetForm" class="space-y-4">
                 <input type="hidden" id="budgetId">
+                
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Uraian / Keterangan</label>
-                    <input type="text" id="budgetDesc" required placeholder="Contoh: Cetak Banner & Brosur Sosialisasi" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-emerald-600">
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Jenis Anggaran / Transaksi</label>
+                    <select id="budgetTypeSelect" onchange="onBudgettypeChange()" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-600">
+                        <option value="Uang Pendaftaran">Uang Pendaftaran</option>
+                        <option value="Uang Masuk">Uang Masuk</option>
+                        <option value="Belanja">Belanja (Pengeluaran)</option>
+                    </select>
                 </div>
+
+                <!-- Kontainer Pilihan Gelombang (Muncul jika Uang Pendaftaran / Uang Masuk) -->
+                <div id="budgetWaveContainer">
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Pilih Gelombang</label>
+                    <select id="budgetWaveSelect" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-600">
+                        <option value="Gelombang 1">Gelombang 1</option>
+                        <option value="Gelombang 2">Gelombang 2</option>
+                    </select>
+                </div>
+
+                <!-- Kontainer Rincian Belanja (Muncul jika Belanja) -->
+                <div id="budgetExpenseContainer" class="hidden">
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Rincian Barang / Keperluan Belanja</label>
+                    <input type="text" id="budgetExpenseItem" placeholder="Contoh: Pencetakan Banner, Konsumsi Panitia, ATK" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-emerald-600">
+                </div>
+
                 <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Kategori Jenis</label>
-                        <select id="budgetCategory" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-600">
-                            <option value="Pemasukan">Pemasukan</option>
-                            <option value="Pengeluaran">Pengeluaran</option>
-                        </select>
-                    </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Tanggal Transaksi</label>
                         <input type="date" id="budgetDate" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-emerald-600">
                     </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Nominal Rupiah (Angka Saja)</label>
-                    <div class="relative flex items-center">
-                        <span class="absolute left-3 text-xs text-slate-500 font-bold">Rp.</span>
-                        <input type="number" id="budgetAmount" required placeholder="1500000" class="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-emerald-600">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Nominal Rupiah (Rp)</label>
+                        <input type="number" id="budgetAmount" required placeholder="1500000" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-emerald-600">
                     </div>
                 </div>
+
                 <div class="flex justify-end space-x-3 pt-3">
                     <button type="button" onclick="closeBudgetModal()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all">Batal</button>
                     <button type="submit" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl transition-all shadow-md shadow-emerald-600/20">Simpan Anggaran</button>
@@ -992,6 +1147,10 @@
             document.getElementById('budgetForm').addEventListener('submit', handleSaveBudget);
             document.getElementById('applicantForm').addEventListener('submit', handleSaveApplicant);
             document.getElementById('registerForm').addEventListener('submit', handlePublicRegister);
+            
+            const monthsNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            const now = new Date();
+            document.getElementById('reportCurrentDateStr').innerText = `${now.getDate()} ${monthsNames[now.getMonth()]} ${now.getFullYear()}`;
         });
 
         async function initializeDefaultDataIfEmpty() {
@@ -1038,14 +1197,18 @@
                 const budgetSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'budgets'));
                 if (budgetSnap.empty) {
                     await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'budgets'), {
-                        desc: "Pencetakan Brosur dan Banner PSB",
+                        desc: "Belanja: Pencetakan Brosur dan Banner PSB",
                         category: "Pengeluaran",
+                        type: "Belanja",
+                        expenseItem: "Cetak Brosur & Banner",
                         date: "2026-01-05",
                         amount: 1500000
                     });
                     await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'budgets'), {
-                        desc: "Penerimaan Pendaftaran Gelombang 1",
+                        desc: "Uang Pendaftaran - Gelombang 1",
                         category: "Pemasukan",
+                        type: "Uang Pendaftaran",
+                        wave: "Gelombang 1",
                         date: "2026-01-15",
                         amount: 4500000
                     });
@@ -1115,6 +1278,19 @@
             const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
             return `${parseInt(parts[2])} ${months[parseInt(parts[1])]} ${parts[0]}`;
         }
+
+        // --- TOGGLE PASSWORD VISIBILITY ---
+        window.togglePassword = function(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fa-solid fa-eye-slash text-xs';
+            } else {
+                input.type = 'password';
+                icon.className = 'fa-solid fa-eye text-xs';
+            }
+        };
 
         // --- LOGIN ADMIN ---
         async function handleAdminLogin(e) {
@@ -1653,13 +1829,29 @@
             try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'applicants', id)); showAlert("Data pendaftar berhasil dihapus."); } catch (err) { console.error(err); }
         };
 
-        // --- BUDGET / ANGGARAN & LAPORAN MANAGEMENT (Baru) ---
+        // --- BUDGET / ANGGARAN & LAPORAN MANAGEMENT ---
+        window.onBudgettypeChange = function() {
+            const type = document.getElementById('budgetTypeSelect').value;
+            const waveContainer = document.getElementById('budgetWaveContainer');
+            const expenseContainer = document.getElementById('budgetExpenseContainer');
+
+            if (type === 'Belanja') {
+                waveContainer.classList.add('hidden');
+                expenseContainer.classList.remove('hidden');
+            } else {
+                waveContainer.classList.remove('hidden');
+                expenseContainer.classList.add('hidden');
+            }
+        };
+
         window.openAddBudgetModal = function() {
             document.getElementById('budgetId').value = "";
-            document.getElementById('budgetDesc').value = "";
-            document.getElementById('budgetCategory').value = "Pengeluaran";
+            document.getElementById('budgetTypeSelect').value = "Uang Pendaftaran";
+            document.getElementById('budgetWaveSelect').value = "Gelombang 1";
+            document.getElementById('budgetExpenseItem').value = "";
             document.getElementById('budgetDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('budgetAmount').value = "";
+            onBudgettypeChange();
             document.getElementById('budgetModalTitle').innerText = "Tambah Item Anggaran PSB";
             document.getElementById('budgetModal').classList.remove('hidden');
         };
@@ -1672,10 +1864,12 @@
             const item = budgetList.find(b => b.id === id);
             if (!item) return;
             document.getElementById('budgetId').value = item.id;
-            document.getElementById('budgetDesc').value = item.desc;
-            document.getElementById('budgetCategory').value = item.category;
+            document.getElementById('budgetTypeSelect').value = item.type || (item.category === 'Pemasukan' ? 'Uang Pendaftaran' : 'Belanja');
+            if (item.wave) document.getElementById('budgetWaveSelect').value = item.wave;
+            if (item.expenseItem) document.getElementById('budgetExpenseItem').value = item.expenseItem;
             document.getElementById('budgetDate').value = item.date || new Date().toISOString().split('T')[0];
             document.getElementById('budgetAmount').value = item.amount;
+            onBudgettypeChange();
             document.getElementById('budgetModalTitle').innerText = "Edit Item Anggaran";
             document.getElementById('budgetModal').classList.remove('hidden');
         };
@@ -1683,12 +1877,26 @@
         async function handleSaveBudget(e) {
             e.preventDefault();
             const id = document.getElementById('budgetId').value;
-            const data = {
-                desc: document.getElementById('budgetDesc').value,
-                category: document.getElementById('budgetCategory').value,
-                date: document.getElementById('budgetDate').value,
-                amount: parseInt(document.getElementById('budgetAmount').value) || 0
-            };
+            const type = document.getElementById('budgetTypeSelect').value;
+            const date = document.getElementById('budgetDate').value;
+            const amount = parseInt(document.getElementById('budgetAmount').value) || 0;
+
+            let category = "Pemasukan";
+            let desc = "";
+            let wave = "";
+            let expenseItem = "";
+
+            if (type === 'Uang Pendaftaran' || type === 'Uang Masuk') {
+                category = "Pemasukan";
+                wave = document.getElementById('budgetWaveSelect').value;
+                desc = `${type} - ${wave}`;
+            } else {
+                category = "Pengeluaran";
+                expenseItem = document.getElementById('budgetExpenseItem').value;
+                desc = `Belanja: ${expenseItem}`;
+            }
+
+            const data = { desc, category, type, wave, expenseItem, date, amount };
 
             try {
                 if (id) {
@@ -1711,6 +1919,45 @@
             } catch (err) {
                 console.error(err);
             }
+        };
+
+        window.openBudgetDetailModal = function(category) {
+            const titleEl = document.getElementById('budgetDetailModalTitle');
+            const contentEl = document.getElementById('budgetDetailModalContent');
+            contentEl.innerHTML = '';
+
+            const items = budgetList.filter(b => b.category === category);
+            titleEl.innerText = category === 'Pemasukan' ? 'Rincian Pemasukan PSB (Uang Pendaftaran & Uang Masuk)' : 'Rincian Pengeluaran / Belanja PSB';
+
+            if (items.length === 0) {
+                contentEl.innerHTML = `<p class="text-slate-400 text-center py-4">Belum ada rincian data untuk kategori ini.</p>`;
+            } else {
+                let total = 0;
+                items.forEach(i => {
+                    total += (i.amount || 0);
+                    const div = document.createElement('div');
+                    div.className = "p-3 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center";
+                    div.innerHTML = `
+                        <div>
+                            <span class="font-bold text-slate-800 block">${i.desc}</span>
+                            <span class="text-[10px] text-slate-400">Tanggal: ${formatDateID(i.date)}</span>
+                        </div>
+                        <span class="font-extrabold ${category === 'Pemasukan' ? 'text-emerald-600' : 'text-rose-600'}">${formatRupiah(i.amount)}</span>
+                    `;
+                    contentEl.appendChild(div);
+                });
+
+                const totalDiv = document.createElement('div');
+                totalDiv.className = "p-3 bg-slate-900 text-white rounded-xl flex justify-between items-center font-bold mt-2";
+                totalDiv.innerHTML = `<span>Total Keseluruhan</span><span>${formatRupiah(total)}</span>`;
+                contentEl.appendChild(totalDiv);
+            }
+
+            document.getElementById('budgetDetailModal').classList.remove('hidden');
+        };
+
+        window.closeBudgetDetailModal = function() {
+            document.getElementById('budgetDetailModal').classList.add('hidden');
         };
 
         function renderBudgetTable() {
@@ -1753,6 +2000,51 @@
             document.getElementById('reportNetBalance').innerText = formatRupiah(netBalance);
             document.getElementById('budgetCountLabel').innerText = `${budgetList.length} Item tercatat`;
         }
+
+        // --- GENERATE LAPORAN AKHIR PANITIA ---
+        window.openFinalReportModal = function() {
+            const totalApp = applicantsList.length;
+            const mtwApp = applicantsList.filter(a => (a.jenjang || 'MTw') === 'MTw').length;
+            const imApp = applicantsList.filter(a => a.jenjang === 'IM').length;
+            const ilApp = applicantsList.filter(a => a.jenjang === 'IL').length;
+            const aksApp = applicantsList.filter(a => a.jenjang === 'Akselerasi').length;
+
+            document.getElementById('repMTw').innerText = `${mtwApp} Santri`;
+            document.getElementById('repIM').innerText = `${imApp} Santri`;
+            document.getElementById('repIL').innerText = `${ilApp} Santri`;
+            document.getElementById('repAks').innerText = `${aksApp} Santri`;
+
+            document.getElementById('repTotalApp').innerText = totalApp;
+            document.getElementById('repPendingApp').innerText = applicantsList.filter(a => a.status === 'Menunggu Verifikasi').length;
+            document.getElementById('repAcceptedApp').innerText = applicantsList.filter(a => a.status === 'Diterima').length;
+            document.getElementById('repRejectedApp').innerText = applicantsList.filter(a => a.status === 'Tidak Diterima' || a.status === 'Tes Ulang').length;
+
+            document.getElementById('repTotalTasks').innerText = tasksList.length;
+            document.getElementById('repInProgressTasks').innerText = tasksList.filter(t => t.status === 'in-progress').length;
+            document.getElementById('repDoneTasks').innerText = tasksList.filter(t => t.status === 'done').length;
+
+            let totalIn = 0;
+            let totalEx = 0;
+            let detailsHtml = "";
+
+            budgetList.forEach(item => {
+                const amt = parseInt(item.amount) || 0;
+                if (item.category === 'Pemasukan') totalIn += amt;
+                else totalEx += amt;
+                detailsHtml += `<div class="flex justify-between text-[11px] border-b border-slate-100 py-1"><span>${item.desc} (${item.category})</span><strong class="${item.category === 'Pemasukan' ? 'text-emerald-700' : 'text-rose-600'}">${formatRupiah(amt)}</strong></div>`;
+            });
+
+            document.getElementById('repIncome').innerText = formatRupiah(totalIn);
+            document.getElementById('repExpense').innerText = formatRupiah(totalEx);
+            document.getElementById('repBalance').innerText = formatRupiah(totalIn - totalEx);
+            document.getElementById('repBudgetDetailsList').innerHTML = detailsHtml || '<p class="text-slate-400 text-center">Belum ada rincian anggaran.</p>';
+
+            document.getElementById('finalReportModal').classList.remove('hidden');
+        };
+
+        window.closeFinalReportModal = function() {
+            document.getElementById('finalReportModal').classList.add('hidden');
+        };
 
         window.exportFinancialReportExcel = function() {
             if (!budgetList || budgetList.length === 0) {
