@@ -157,6 +157,10 @@
                         <i class="fa-solid fa-layer-group w-5"></i>
                         <span>Gelombang PSB</span>
                     </button>
+                    <button onclick="switchTab('reports')" id="nav-reports" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all text-slate-600 hover:bg-slate-50">
+                        <i class="fa-solid fa-file-invoice-dollar w-5"></i>
+                        <span>Laporan & Anggaran</span>
+                    </button>
                 </div>
                 <div id="sidebarMenuUser" class="space-y-1 hidden">
                     <button onclick="switchTab('userportal')" id="nav-userportal" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all bg-emerald-50 text-emerald-700">
@@ -287,8 +291,8 @@
                                 </div>
                             </div>
                             <div class="mt-6 pt-4 border-t border-slate-100">
-                                <button onclick="switchTab('kanban')" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition-all shadow-md">
-                                    <i class="fa-solid fa-table-columns mr-2"></i> Buka Project Board Panitia
+                                <button onclick="switchTab('reports')" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition-all shadow-md">
+                                    <i class="fa-solid fa-file-invoice-dollar mr-2"></i> Buka Laporan & Anggaran
                                 </button>
                             </div>
                         </div>
@@ -428,6 +432,79 @@
                     <div id="wavesCardsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
                 </section>
 
+                <!-- View Reports & Budget (Laporan & Anggaran Baru) -->
+                <section id="view-reports" class="space-y-6 hidden">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <h1 class="text-xl font-bold text-slate-900">Pusat Laporan & Anggaran (RAB PSB)</h1>
+                            <p class="text-xs text-slate-500">Kelola anggaran pemasukan/pengeluaran panitia serta generate laporan komprehensif.</p>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <button onclick="exportFinancialReportExcel()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-md shadow-blue-600/20 transition-all flex items-center space-x-2">
+                                <i class="fa-solid fa-file-excel"></i>
+                                <span>Export Laporan Keuangan</span>
+                            </button>
+                            <button onclick="openAddBudgetModal()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center space-x-2">
+                                <i class="fa-solid fa-plus"></i>
+                                <span>Tambah Item Anggaran</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Ringkasan Finansial Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center space-x-4">
+                            <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-lg font-bold">
+                                <i class="fa-solid fa-arrow-down"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-slate-500 font-semibold">Total Pemasukan PSB</p>
+                                <h3 id="reportTotalIncome" class="text-lg font-bold text-emerald-600">Rp. 0</h3>
+                            </div>
+                        </div>
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center space-x-4">
+                            <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center text-lg font-bold">
+                                <i class="fa-solid fa-arrow-up"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-slate-500 font-semibold">Total Pengeluaran / RAB</p>
+                                <h3 id="reportTotalExpense" class="text-lg font-bold text-rose-600">Rp. 0</h3>
+                            </div>
+                        </div>
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center space-x-4">
+                            <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-lg font-bold">
+                                <i class="fa-solid fa-wallet"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-slate-500 font-semibold">Saldo Kas Bersih</p>
+                                <h3 id="reportNetBalance" class="text-lg font-bold text-slate-900">Rp. 0</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabel Item Anggaran -->
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-sm font-bold text-slate-900">Rincian Anggaran (Pemasukan & Pengeluaran)</h3>
+                            <span class="text-xs text-slate-500 font-semibold" id="budgetCountLabel">0 Item tercatat</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-50 text-slate-500 uppercase font-bold">
+                                    <tr>
+                                        <th class="p-3 rounded-l-xl">Keterangan / Uraian</th>
+                                        <th class="p-3">Kategori</th>
+                                        <th class="p-3">Tanggal</th>
+                                        <th class="p-3">Nominal (Rp)</th>
+                                        <th class="p-3 rounded-r-xl text-right">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="budgetTableBody" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- View User Portal -->
                 <section id="view-userportal" class="space-y-6 hidden">
                     <div class="bg-gradient-to-r from-emerald-800 to-emerald-900 rounded-3xl p-6 md:p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
@@ -519,6 +596,10 @@
             <button onclick="switchTab('waves')" id="mnav-waves" class="flex flex-col items-center space-y-1 text-slate-400">
                 <i class="fa-solid fa-layer-group text-base"></i>
                 <span class="text-[10px] font-bold">Gelombang</span>
+            </button>
+            <button onclick="switchTab('reports')" id="mnav-reports" class="flex flex-col items-center space-y-1 text-slate-400">
+                <i class="fa-solid fa-file-invoice-dollar text-base"></i>
+                <span class="text-[10px] font-bold">Laporan</span>
             </button>
         </nav>
         <nav class="md:hidden bg-white border-t border-slate-200 fixed bottom-0 left-0 right-0 z-30 flex justify-around py-3 px-2 shadow-lg hidden" id="mobileNavUser">
@@ -697,6 +778,47 @@
         </div>
     </div>
 
+    <!-- Modal Tambah/Edit Item Anggaran (Baru) -->
+    <div id="budgetModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm hidden">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-6 mx-4">
+            <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                <h3 id="budgetModalTitle" class="text-base font-bold text-slate-900">Tambah Item Anggaran PSB</h3>
+                <button onclick="closeBudgetModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="budgetForm" class="space-y-4">
+                <input type="hidden" id="budgetId">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Uraian / Keterangan</label>
+                    <input type="text" id="budgetDesc" required placeholder="Contoh: Cetak Banner & Brosur Sosialisasi" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-emerald-600">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Kategori Jenis</label>
+                        <select id="budgetCategory" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-600">
+                            <option value="Pemasukan">Pemasukan</option>
+                            <option value="Pengeluaran">Pengeluaran</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Tanggal Transaksi</label>
+                        <input type="date" id="budgetDate" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-emerald-600">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Nominal Rupiah (Angka Saja)</label>
+                    <div class="relative flex items-center">
+                        <span class="absolute left-3 text-xs text-slate-500 font-bold">Rp.</span>
+                        <input type="number" id="budgetAmount" required placeholder="1500000" class="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-emerald-600">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 pt-3">
+                    <button type="button" onclick="closeBudgetModal()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all">Batal</button>
+                    <button type="submit" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl transition-all shadow-md shadow-emerald-600/20">Simpan Anggaran</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Modal Tambah/Edit Pendaftar -->
     <div id="applicantModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm hidden">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-6 mx-4">
@@ -852,6 +974,7 @@
         let tasksList = [];
         let applicantsList = [];
         let wavesList = [];
+        let budgetList = [];
 
         const REQUIRED_DOCS = [
             { key: 'raport', label: 'Raport Sekolah Asal' },
@@ -866,6 +989,7 @@
             document.getElementById('userLoginForm').addEventListener('submit', handleUserLogin);
             document.getElementById('taskForm').addEventListener('submit', handleSaveTask);
             document.getElementById('waveForm').addEventListener('submit', handleSaveWave);
+            document.getElementById('budgetForm').addEventListener('submit', handleSaveBudget);
             document.getElementById('applicantForm').addEventListener('submit', handleSaveApplicant);
             document.getElementById('registerForm').addEventListener('submit', handlePublicRegister);
         });
@@ -911,6 +1035,22 @@
                     });
                 }
 
+                const budgetSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'budgets'));
+                if (budgetSnap.empty) {
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'budgets'), {
+                        desc: "Pencetakan Brosur dan Banner PSB",
+                        category: "Pengeluaran",
+                        date: "2026-01-05",
+                        amount: 1500000
+                    });
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'budgets'), {
+                        desc: "Penerimaan Pendaftaran Gelombang 1",
+                        category: "Pemasukan",
+                        date: "2026-01-15",
+                        amount: 4500000
+                    });
+                }
+
                 loadFirestoreData();
             } catch (err) {
                 console.error("Init default error:", err);
@@ -951,6 +1091,14 @@
                     wavesList.push({ id: docSnap.id, ...docSnap.data() });
                 });
                 renderWavesCards();
+            });
+
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'budgets'), (snapshot) => {
+                budgetList = [];
+                snapshot.forEach((docSnap) => {
+                    budgetList.push({ id: docSnap.id, ...docSnap.data() });
+                });
+                renderBudgetTable();
             });
         }
 
@@ -1101,7 +1249,7 @@
         };
 
         window.switchTab = function(tabName) {
-            const tabs = ['dashboard', 'kanban', 'applicants', 'waves', 'userportal'];
+            const tabs = ['dashboard', 'kanban', 'applicants', 'waves', 'reports', 'userportal'];
             tabs.forEach(t => {
                 const el = document.getElementById(`view-${t}`);
                 if (el) el.classList.add('hidden');
@@ -1119,6 +1267,10 @@
 
             const activeMNav = document.getElementById(`mnav-${tabName}`);
             if (activeMNav) activeMNav.className = "flex flex-col items-center space-y-1 text-emerald-700";
+
+            if (tabName === 'reports') {
+                renderBudgetTable();
+            }
 
             if (tabName === 'userportal' && currentLoggedInUser) {
                 renderUserDocuments();
@@ -1499,6 +1651,136 @@
 
         window.deleteApplicantItem = async function(id) {
             try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'applicants', id)); showAlert("Data pendaftar berhasil dihapus."); } catch (err) { console.error(err); }
+        };
+
+        // --- BUDGET / ANGGARAN & LAPORAN MANAGEMENT (Baru) ---
+        window.openAddBudgetModal = function() {
+            document.getElementById('budgetId').value = "";
+            document.getElementById('budgetDesc').value = "";
+            document.getElementById('budgetCategory').value = "Pengeluaran";
+            document.getElementById('budgetDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('budgetAmount').value = "";
+            document.getElementById('budgetModalTitle').innerText = "Tambah Item Anggaran PSB";
+            document.getElementById('budgetModal').classList.remove('hidden');
+        };
+
+        window.closeBudgetModal = function() {
+            document.getElementById('budgetModal').classList.add('hidden');
+        };
+
+        window.editBudget = function(id) {
+            const item = budgetList.find(b => b.id === id);
+            if (!item) return;
+            document.getElementById('budgetId').value = item.id;
+            document.getElementById('budgetDesc').value = item.desc;
+            document.getElementById('budgetCategory').value = item.category;
+            document.getElementById('budgetDate').value = item.date || new Date().toISOString().split('T')[0];
+            document.getElementById('budgetAmount').value = item.amount;
+            document.getElementById('budgetModalTitle').innerText = "Edit Item Anggaran";
+            document.getElementById('budgetModal').classList.remove('hidden');
+        };
+
+        async function handleSaveBudget(e) {
+            e.preventDefault();
+            const id = document.getElementById('budgetId').value;
+            const data = {
+                desc: document.getElementById('budgetDesc').value,
+                category: document.getElementById('budgetCategory').value,
+                date: document.getElementById('budgetDate').value,
+                amount: parseInt(document.getElementById('budgetAmount').value) || 0
+            };
+
+            try {
+                if (id) {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'budgets', id), data);
+                } else {
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'budgets'), data);
+                }
+                closeBudgetModal();
+                showAlert("Data anggaran berhasil disimpan!", "Sukses", "emerald");
+            } catch (err) {
+                console.error(err);
+                showAlert("Gagal menyimpan anggaran.", "Error", "rose");
+            }
+        }
+
+        window.deleteBudgetItem = async function(id) {
+            try {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'budgets', id));
+                showAlert("Item anggaran berhasil dihapus.");
+            } catch (err) {
+                console.error(err);
+            }
+        };
+
+        function renderBudgetTable() {
+            const tbody = document.getElementById('budgetTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            let totalIncome = 0;
+            let totalExpense = 0;
+
+            if (budgetList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-400">Belum ada catatan anggaran.</td></tr>`;
+            }
+
+            budgetList.forEach(item => {
+                const amt = parseInt(item.amount) || 0;
+                if (item.category === 'Pemasukan') totalIncome += amt;
+                else totalExpense += amt;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-all";
+                tr.innerHTML = `
+                    <td class="p-3.5 font-bold text-slate-800">${item.desc}</td>
+                    <td class="p-3.5">
+                        <span class="px-2.5 py-1 rounded-full font-bold text-[10px] ${item.category === 'Pemasukan' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">${item.category}</span>
+                    </td>
+                    <td class="p-3.5 text-slate-600">${formatDateID(item.date)}</td>
+                    <td class="p-3.5 font-bold ${item.category === 'Pemasukan' ? 'text-emerald-600' : 'text-rose-600'}">${formatRupiah(amt)}</td>
+                    <td class="p-3.5 text-right space-x-1">
+                        <button onclick="editBudget('${item.id}')" title="Edit" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteBudgetItem('${item.id}')" title="Hapus" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-semibold"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            const netBalance = totalIncome - totalExpense;
+            document.getElementById('reportTotalIncome').innerText = formatRupiah(totalIncome);
+            document.getElementById('reportTotalExpense').innerText = formatRupiah(totalExpense);
+            document.getElementById('reportNetBalance').innerText = formatRupiah(netBalance);
+            document.getElementById('budgetCountLabel').innerText = `${budgetList.length} Item tercatat`;
+        }
+
+        window.exportFinancialReportExcel = function() {
+            if (!budgetList || budgetList.length === 0) {
+                showAlert("Tidak ada data anggaran untuk diexport.", "Peringatan", "amber");
+                return;
+            }
+            let csvContent = "Uraian / Keterangan\tKategori\tTanggal\tNominal (Rp)\n";
+            let totalIn = 0;
+            let totalEx = 0;
+            budgetList.forEach(item => {
+                csvContent += `${item.desc}\t${item.category}\t${item.date || '-'}\t${item.amount}\n`;
+                if(item.category === 'Pemasukan') totalIn += item.amount;
+                else totalEx += item.amount;
+            });
+            csvContent += `\nTotal Pemasukan\t\t\t${totalIn}\n`;
+            csvContent += `Total Pengeluaran\t\t\t${totalEx}\n`;
+            csvContent += `Saldo Kas Bersih\t\t\t${totalIn - totalEx}\n`;
+
+            const blob = new Blob(["\ufeff" + csvContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Laporan_Keuangan_PSB_PIAT6_${new Date().toISOString().slice(0,10)}.xls`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showAlert("Laporan keuangan berhasil di-export ke format Excel (.xls)!", "Export Berhasil", "emerald");
         };
 
         // --- WAVES MANAGEMENT ---
