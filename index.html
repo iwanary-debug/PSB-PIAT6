@@ -1621,7 +1621,6 @@
         window.uploadUserDocument = async function(docKey, docLabel) {
             if (!currentLoggedInUser) return;
 
-            // Buat input file secara dinamis
             const fileInput = document.createElement('input');
             fileInput.type = 'file';
             fileInput.accept = '.pdf,image/*';
@@ -1643,7 +1642,6 @@
                     };
 
                     try {
-                        // URL Web App dari Google Apps Script Anda
                         const scriptURL = "https://script.google.com/macros/s/AKfycbxq_pEmvTEwVVHOA54kx9sSNNCjgVeNoyu7Eson1HOTcEacaJM81g3N6ThvG1EHQud7Aw/exec";
                         
                         const response = await fetch(scriptURL, {
@@ -1653,7 +1651,6 @@
                         const result = await response.json();
 
                         if (result.status === 'success') {
-                            // Simpan link Google Drive ke Firestore
                             const updatedDocs = currentLoggedInUser.documents || {};
                             updatedDocs[docKey] = {
                                 uploaded: true,
